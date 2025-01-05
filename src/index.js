@@ -109,7 +109,19 @@ function explain(interaction){
 
     rl.oneline('./explain.txt', lineNumber.value, function(err, res) {
         if (err) console.error(err)	//handling error
-        if (res == "" || res == "u" || res == "l") { interaction.reply("No explaination for this episode"); return;}
+        if (res == "" || res == "u" || res == "l") { 
+            getNthVideo(CHANNEL_ID, lineNumber.value).then((video) => {
+                getCommentsByUser(video.videoId,"@MatttNguyen2").then((comment) => {
+                    message = comment[0].comment;
+                    message = message.replaceAll("<br>","\n");
+                    message = message.replaceAll("&quot;","\"");
+                    message = message.replaceAll("&#39;","\'");
+                    interaction.reply(`No community made explanation for episode ${lineNumber.value} instead trying to pull from @MatttNguyen2:\n${message}`)
+                    console.log(comment);
+                });
+            }); 
+            return;
+        }
         let text = res.slice(1);
         text = text.replaceAll("<br>","\n");
         
@@ -237,6 +249,7 @@ function comment(interaction){
                 }
                 message = message.replaceAll("<br>","\n");
                 message = message.replaceAll("&quot;","\"");
+                message = message.replaceAll("&#39;","\'");
                 interaction.reply(message);
             } else {
                 interaction.reply({content:"No such comments",ephemeral:true});

@@ -13,16 +13,22 @@ const commands = [
                 required:true
 
             }
-        ]
+        ],
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
     },
     {
         name:"daily-smots",
         description:"Get the latest smots video",
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
 
     },
     {
         name:"random-smots",
-        description:"Get a random smots video"
+        description:"Get a random smots video",
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
     },
     {
         name:"comment",
