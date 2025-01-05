@@ -1,0 +1,20 @@
+{
+  "name": "blahaj",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Grub",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.7",
+    "fs": "^0.0.1-security",
+    "googleapis": "^144.0.0",
+    "n-readlines": "^1.0.1",
+    "readline-specific": "^1.0.4"
+  }
+}

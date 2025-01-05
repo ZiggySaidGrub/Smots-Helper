@@ -1,0 +1,130 @@
+require("dotenv").config();
+const { REST, Routes, ApplicationCommandOptionType } = require("discord.js");
+
+const commands = [
+    {
+        name:"smots",
+        description:"Get a smots episode of your choosing",
+        options:[
+            {
+                name:"episode",
+                description:"Which smots episode to view?",
+                type:ApplicationCommandOptionType.Number,
+                required:true
+
+            }
+        ]
+    },
+    {
+        name:"daily-smots",
+        description:"Get the latest smots video",
+
+    },
+    {
+        name:"random-smots",
+        description:"Get a random smots video"
+    },
+    {
+        name:"comment",
+        description:"Get a comment from a specified user on a smots episode",
+        options:[
+            {
+                name:"episode",
+                description:"Which smots episode to look for comments on?",
+                type:ApplicationCommandOptionType.Number,
+                required:true
+
+            },
+            {
+                name:"user",
+                description:"Which user to get comments from? This is case-sensitive. (Type their username not display name)",
+                type:ApplicationCommandOptionType.String,
+                required:true
+            }
+        ]
+    },
+    {
+        name:"explain",
+        description:"Get a community made explanation for a smots video",
+        options:[
+            {
+                name:"episode",
+                description:"Which smots episode to explain?",
+                type:ApplicationCommandOptionType.Number,
+                required:true
+
+            },
+        ]
+    },
+    {
+        name:"submit",
+        description:"Submit a community made explanation for a smots video",
+        options:[
+            {
+                name:"episode",
+                description:"Which smots episode to explain?",
+                type:ApplicationCommandOptionType.Number,
+                required:true
+
+            },
+            {
+                name:"content",
+                description:"The body of your explanation",
+                type:ApplicationCommandOptionType.String,
+                required:true
+            }
+        ]
+    },
+    {
+        name:"lock",
+        description:"Lock or unlock an explanation so it cant be changed (Mod only)",
+        options:[
+            {
+                name:"episode",
+                description:"Which smots episode to lock explanations for?",
+                type:ApplicationCommandOptionType.Number,
+                required:true
+
+            },
+            {
+                name:"locked",
+                description:"Lock or unlock this explanation? (True to lock, False to unlock)",
+                type:ApplicationCommandOptionType.Boolean,
+                required:true,
+            }
+        ]
+    },
+    {
+        name:"list",
+        description:"DM's you the file that has all the definitions. WARNING the list is really big."
+    },
+    {
+        name:"appoint",
+        description:"Appoint a user to be a mod so they can lock and unlock explanations. (Mod only)",
+        options:[
+            {
+                name:"user",
+                description:"The user to give the role to",
+                type:ApplicationCommandOptionType.User,
+                required:true
+            }
+        ]
+    }
+];
+
+const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
+
+(async () => {
+    try {
+        console.log("Regestering slash commands...")
+        await rest.put(
+            Routes.applicationGuildCommands(
+                process.env.CLIENT_ID,process.env.GUILD_ID
+            ),
+            { body:commands }
+        );
+        console.log("✅ Slash commands were registered. ✅")
+    } catch (error) {
+        console.log(`❌ There was an error regestering commands. ❌ \n Error:${error}`)
+    }
+})();
