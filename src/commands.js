@@ -27,8 +27,8 @@ const commands = [
     {
         name:"random-smots",
         description:"Get a random smots video",
-        "integration_types":[0,1],
-        "contexts":[0,1,2]
+        integration_types:[0,1],
+        contexts:[0,1,2]
     },
     {
         name:"comment",
@@ -47,7 +47,9 @@ const commands = [
                 type:ApplicationCommandOptionType.String,
                 required:true
             }
-        ]
+        ],
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
     },
     {
         name:"explain",
@@ -60,7 +62,9 @@ const commands = [
                 required:true
 
             },
-        ]
+        ],
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
     },
     {
         name:"submit",
@@ -79,7 +83,9 @@ const commands = [
                 type:ApplicationCommandOptionType.String,
                 required:true
             }
-        ]
+        ],
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
     },
     {
         name:"lock",
@@ -98,11 +104,15 @@ const commands = [
                 type:ApplicationCommandOptionType.Boolean,
                 required:true,
             }
-        ]
+        ],
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
     },
     {
         name:"list",
-        description:"DM's you the file that has all the definitions. WARNING the list is really big."
+        description:"DM's you the file that has all the definitions. WARNING the list is really big.",
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
     },
     {
         name:"appoint",
@@ -114,7 +124,9 @@ const commands = [
                 type:ApplicationCommandOptionType.User,
                 required:true
             }
-        ]
+        ],
+        "integration_types":[0,1],
+        "contexts":[0,1,2]
     }
 ];
 
@@ -124,11 +136,12 @@ const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
     try {
         console.log("Regestering slash commands...")
         await rest.put(
-            Routes.applicationGuildCommands(
+            Routes.applicationCommands(
                 process.env.CLIENT_ID,process.env.GUILD_ID
             ),
             { body:commands }
         );
+        
         console.log("✅ Slash commands were registered. ✅")
     } catch (error) {
         console.log(`❌ There was an error regestering commands. ❌ \n Error:${error}`)

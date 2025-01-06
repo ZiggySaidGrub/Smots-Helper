@@ -28,6 +28,7 @@ client.on("ready", (c) => {
 
 
 client.on("interactionCreate",(interaction) => {
+    //if (interaction.context == 1) {interaction.reply("smots gaming"); return;}
     if (!interaction.isChatInputCommand()) return;
     if (interaction.commandName == "smots"){ smots(interaction); return; }
     if (interaction.commandName == "daily-smots"){ dailysmots(interaction); return; }
@@ -64,8 +65,9 @@ client.on("interactionCreate",(interaction) => {
 });
 
 function appoint(interaction){
+    if(interaction.context == 1 || interaction.context == 2) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
     let urole = interaction.member.roles.cache.find(role => role.name === 'smots modding');
-    if(urole === undefined) {interaction.reply("ur not a mod buckarro :joy: 🦐"); return;}
+    if(urole === undefined) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
     
     let user = interaction.options.get("user")
     assignRoleToUser(process.env.GUILD_ID,user.value,"1325282371838152795");
@@ -110,16 +112,19 @@ function explain(interaction){
     rl.oneline('./explain.txt', lineNumber.value, function(err, res) {
         if (err) console.error(err)	//handling error
         if (res == "" || res == "u" || res == "l") { 
-            getNthVideo(CHANNEL_ID, lineNumber.value).then((video) => {
-                getCommentsByUser(video.videoId,"@MatttNguyen2").then((comment) => {
-                    message = comment[0].comment;
-                    message = message.replaceAll("<br>","\n");
-                    message = message.replaceAll("&quot;","\"");
-                    message = message.replaceAll("&#39;","\'");
-                    interaction.reply(`No community made explanation for episode ${lineNumber.value} instead trying to pull from @MatttNguyen2:\n${message}`)
-                    console.log(comment);
-                });
-            }); 
+            getVideoCount(CHANNEL_ID).then((count) => { 
+                if (lineNumber.value > count){ interaction.reply("That video doesn't exist!"); return; }
+                getNthVideo(CHANNEL_ID, lineNumber.value).then((video) => {
+                    getCommentsByUser(video.videoId,"@MatttNguyen2").then((comment) => {
+                        message = comment[0].comment;
+                        message = message.replaceAll("<br>","\n");
+                        message = message.replaceAll("&quot;","\"");
+                        message = message.replaceAll("&#39;","\'");
+                        interaction.reply(`No community made explanation for episode ${lineNumber.value} instead trying to pull from @MatttNguyen2:\n${message}`)
+                        console.log(comment);
+                    });
+                }); 
+            });
             return;
         }
         let text = res.slice(1);
@@ -151,12 +156,13 @@ function submit(interaction){
 }
 
 function lock(interaction){
+    if(interaction.context == 1 || interaction.context == 2) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
     let urole = interaction.member.roles.cache.find(role => role.name === 'smots modding');
     let line = interaction.options.get("episode");
     let lockvalue = interaction.options.get("locked").value;
     
     let lockmsg = "";
-    if(urole === undefined) {interaction.reply("ur not a mod buckarro :joy: 🦐"); return;}
+    if(urole === undefined) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
     getVideoCount(CHANNEL_ID).then((count) => { 
         if (line.value > count) { interaction.reply("That video doesn't exist!"); return;}
         rl.oneline('./explain.txt', line.value, function(err, res) {
