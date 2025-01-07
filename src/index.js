@@ -109,13 +109,16 @@ function explain(interaction){
     //console.log(text);
     //if (text == "") { interaction.reply(`No explination for episode ${lineNumber}`); return;}
 
-    rl.oneline('./explain.txt', lineNumber.value, function(err, res) {
-        if (err) console.error(err)	//handling error
-        if (res == "" || res == "u" || res == "l") { 
-            getVideoCount(CHANNEL_ID).then((count) => { 
+    getVideoCount(CHANNEL_ID).then((count) => {
+        if (!lineNumber) lineNumber = {value:count};
+        rl.oneline('./explain.txt', lineNumber.value, function(err, res) {
+            if (err) console.error(err)	//handling error
+            if (res == "" || res == "u" || res == "l") { 
                 if (lineNumber.value > count){ interaction.reply("That video doesn't exist!"); return; }
                 getNthVideo(CHANNEL_ID, lineNumber.value).then((video) => {
                     getCommentsByUser(video.videoId,"@MatttNguyen2").then((comment) => {
+                        if (comment.length == 0) { interaction.reply(`No explanation for episode ${lineNumber.value}`); return;}
+                        
                         message = comment[0].comment;
                         message = message.replaceAll("<br>","\n");
                         message = message.replaceAll("&quot;","\"");
@@ -124,13 +127,13 @@ function explain(interaction){
                         console.log(comment);
                     });
                 }); 
-            });
-            return;
-        }
-        let text = res.slice(1);
-        text = text.replaceAll("<br>","\n");
-        
-        interaction.reply("Episode "+lineNumber.value+":\n"+text);
+                return;
+            }
+            let text = res.slice(1);
+            text = text.replaceAll("<br>","\n");
+            
+            interaction.reply("Episode "+lineNumber.value+":\n"+text);
+        });
     });
 
 }
@@ -143,7 +146,7 @@ function submit(interaction){
         if (line.value > count) { interaction.reply("That video doesn't exist!"); return;}
         rl.oneline('./explain.txt', line.value, function(err, res) {
             if (err) console.error(err)	//handling error
-            if(res[0] == "l"){interaction.reply("This explanation is locked and can't be changed."); return;}
+            if(res[0] == "l"){interaction.reply(`The explanation for ${line.value} is locked and can't be changed.`); return;}
             (async () => {
                 await writeToLine("./explain.txt",line.value-1,"u" + content.value);
             })();

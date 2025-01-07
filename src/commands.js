@@ -59,7 +59,7 @@ const commands = [
                 name:"episode",
                 description:"Which smots episode to explain?",
                 type:ApplicationCommandOptionType.Number,
-                required:true
+                required:false
 
             },
         ],
@@ -127,7 +127,7 @@ const commands = [
         ],
         "integration_types":[0,1],
         "contexts":[0,1,2]
-    }
+    },
 ];
 
 const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
@@ -137,6 +137,12 @@ const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
         console.log("Regestering slash commands...")
         await rest.put(
             Routes.applicationCommands(
+                process.env.CLIENT_ID,process.env.GUILD_ID
+            ),
+            { body:commands }
+        );
+        await rest.put(
+            Routes.applicationGuildCommands(
                 process.env.CLIENT_ID,process.env.GUILD_ID
             ),
             { body:commands }
