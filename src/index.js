@@ -1,12 +1,12 @@
 require("dotenv").config();
 const rl = require('readline-specific');
-let scoreboard = require('../scoreboard.json');
+let scoreboard = require('./scores/scoreboard.json');
 const fs = require("fs");
 const { Client, IntentsBitField, ActivityType } = require("discord.js");
 const { getLatestVideo, getNthVideo, getVideoCount, getCommentsByUser } = require('../youtubeApi');
 
 const nReadlines = require('n-readlines');
-const explanations = new nReadlines('./explain.txt');
+
 
 const CHANNEL_ID = "UCp7ZXAVupbsyh4V5_XXCubg";
 
@@ -56,7 +56,7 @@ client.on("interactionCreate",(interaction) => {
           
             interaction.user.send("```"+data+"```");
         });*/
-        interaction.user.send({files:["./explain.txt"]})
+        interaction.user.send({files:["./src/scores/explanations.json"]})
     }
     
     
@@ -106,6 +106,7 @@ async function assignRoleToUser(guildId, userId, roleId) {
 
 function explain(interaction){
     let lineNumber = interaction.options.get("episode");
+    let explanations = require("./scores/explanations.json");
     //for (let i = 1;i<=lineNumber;i++) line = explanations.next;
     //text = explanations.toString("ascii");
     //console.log(text);
@@ -113,7 +114,7 @@ function explain(interaction){
 
     getVideoCount(CHANNEL_ID).then((count) => {
         if (!lineNumber) lineNumber = {value:count};
-        rl.oneline('./explain.txt', lineNumber.value, function(err, res) {
+        /*rl.oneline('./explain.txt', lineNumber.value, function(err, res) {
             if (err) console.error(err)	//handling error
             if (res == "" || res == "u" || res == "l") { 
                 if (lineNumber.value > count){ interaction.reply("That video doesn't exist!"); return; }
@@ -135,7 +136,26 @@ function explain(interaction){
             text = text.replaceAll("<br>","\n");
             
             interaction.reply("Episode "+lineNumber.value+":\n"+text);
-        });
+        });*/
+        let data = explanations[lineNumber.value-1];
+        if (data.content == "") { 
+            if (lineNumber.value > count){ interaction.reply("That video doesn't exist!"); return; }
+            getNthVideo(CHANNEL_ID, lineNumber.value).then((video) => {
+                getCommentsByUser(video.videoId,"@MatttNguyen2").then((comment) => {
+                    if (comment.length == 0) { interaction.reply(`No explanation for episode ${lineNumber.value}`); return;}
+                    
+                    message = comment[0].comment;
+                    message = message.replaceAll("<br>","\n");
+                    message = message.replaceAll("&quot;","\"");
+                    message = message.replaceAll("&#39;","\'");
+                    interaction.reply(`No community made explanation for episode ${lineNumber.value} instead trying to pull from @MatttNguyen2:\n${message}`)
+                    console.log(comment);
+                });
+            }); 
+            return;
+        }
+        let text = data.content.replaceAll("<br>","\n");
+        interaction.reply("Episode "+lineNumber.value+":\n"+text);
     });
 
 }
@@ -144,27 +164,12 @@ function explain(interaction){
 function submit(interaction){
     let line = interaction.options.get("episode");
     let content = interaction.options.get("content");
+    let explanations = require("./scores/explanations.json");
+    let i = line.value-1;
     getVideoCount(CHANNEL_ID).then((count) => { 
         if (line.value > count) { interaction.reply("That video doesn't exist!"); return;}
-        rl.oneline('./explain.txt', line.value, function(err, res) {
-            let newUser = true;
-            if (scoreboard.length > 0){
-                for (let score = 0; score < scoreboard.length;score++) {
-                    if (scoreboard[score].id == interaction.user.id) { scoreboard[score].score++; newUser = false; break; }
-                }
-            }
-            if (newUser){ scoreboard = scoreboard.concat({"id":interaction.user.id,"name":interaction.user.globalName,"score":1});}
-            scoreboard.sort((a, b) => b.score - a.score);
-            //fs.writeFileSync("../scoreboard.json",JSON.stringify(scoreboard, null, 2));
-            (async () => {
-                console.log(scoreboard);
-                fs.writeFile("../scoreboard.json", JSON.stringify(scoreboard), function writeJSON(err) {
-                    if (err) return console.log(err);
-                    //console.log(JSON.stringify(scoreboard));
-                    //console.log('writing to ' + "../scoreboard.json");
-                });
-            })();
-                
+        /*rl.oneline('./explain.txt', line.value, function(err, res) {
+
             if (err) console.error(err)	//handling error
             if(res[0] == "l"){interaction.reply(`The explanation for ${line.value} is locked and can't be changed.`); return;}
             (async () => {
@@ -172,9 +177,28 @@ function submit(interaction){
             })();
             interaction.reply(`Explanation submited for episode ${line.value}!`);
             
-        });
+        });*/
+        
     });
+    if(explanations[i].locked){interaction.reply(`The explanation for ${line.value} is locked and can't be changed.`); return;}
     
+    let newUser = true;
+    if (scoreboard.length > 0){
+        for (let score = 0; score < scoreboard.length;score++) {
+            if (scoreboard[score].id == interaction.user.id) { scoreboard[score].score++; newUser = false; break; }
+        }
+    }
+    if (newUser){ scoreboard = scoreboard.concat({"id":interaction.user.id,"name":interaction.user.globalName,"score":1});}
+    scoreboard.sort((a, b) => b.score - a.score);
+    fs.writeFileSync("./src/scores/scoreboard.json",JSON.stringify(scoreboard, null, 2));
+    
+    explanations[i].content = content.value;
+    explanations[i].user.id = interaction.user.id;
+    explanations[i].user.name = interaction.user.globalName;
+
+    console.log(explanations[i]); // write to file
+    fs.writeFileSync("./src/scores/explanations.json",JSON.stringify(explanations, null, 2));
+    interaction.reply(`Explanation submited for episode ${line.value}!`);
 
 }
 
@@ -183,12 +207,14 @@ function lock(interaction){
     let urole = interaction.member.roles.cache.find(role => role.name === 'smots modding');
     let line = interaction.options.get("episode");
     let lockvalue = interaction.options.get("locked").value;
+    let explanations = require("./scores/explanations.json");
+    let i = line.value-1;
     
     let lockmsg = "";
     if(urole === undefined) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
     getVideoCount(CHANNEL_ID).then((count) => { 
         if (line.value > count) { interaction.reply("That video doesn't exist!"); return;}
-        rl.oneline('./explain.txt', line.value, function(err, res) {
+        /*rl.oneline('./explain.txt', line.value, function(err, res) {
             if (err) console.error(err)	//handling error
 
             if (lockvalue) {lockvalue = "l"; lockmsg = "locked";} 
@@ -199,8 +225,16 @@ function lock(interaction){
             })();
             interaction.reply(`Explanation ${lockmsg} for episode ${line.value}!`);
             
-        });
+        });*/
     });
+    explanations[i].locked = lockvalue;
+
+    if (lockvalue) {lockmsg = "locked";} 
+    else {lockmsg = "unlocked";}
+
+    console.log(explanations[i]); // write to file
+    fs.writeFileSync("./src/scores/explanations.json",JSON.stringify(explanations, null, 2));
+    interaction.reply(`Explanation ${lockmsg} for episode ${line.value}!`);
 }
 
 
