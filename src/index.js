@@ -1,5 +1,6 @@
 require("dotenv").config();
 const rl = require('readline-specific');
+let scoreboard = require('../scoreboard.json');
 const fs = require("fs");
 const { Client, IntentsBitField, ActivityType } = require("discord.js");
 const { getLatestVideo, getNthVideo, getVideoCount, getCommentsByUser } = require('../youtubeApi');
@@ -12,9 +13,9 @@ const CHANNEL_ID = "UCp7ZXAVupbsyh4V5_XXCubg";
 const client = new Client({
     intents: [
         IntentsBitField.Flags.Guilds,
-        //IntentsBitField.Flags.GuildMembers,
+        IntentsBitField.Flags.GuildMembers,
         IntentsBitField.Flags.GuildMessages,
-        //IntentsBitField.Flags.MessageContent
+        IntentsBitField.Flags.MessageContent
     ]
 });
 
@@ -71,6 +72,7 @@ function appoint(interaction){
     
     let user = interaction.options.get("user")
     assignRoleToUser(process.env.GUILD_ID,user.value,"1325282371838152795");
+    assignRoleToUser(process.env.GUILD_ID,user.value,"1326332341894778890");
     console.log(user);
     interaction.reply(`Gave ${user.user.globalName} the smots modding role`);
     
@@ -145,6 +147,24 @@ function submit(interaction){
     getVideoCount(CHANNEL_ID).then((count) => { 
         if (line.value > count) { interaction.reply("That video doesn't exist!"); return;}
         rl.oneline('./explain.txt', line.value, function(err, res) {
+            let newUser = true;
+            if (scoreboard.length > 0){
+                for (let score = 0; score < scoreboard.length;score++) {
+                    if (scoreboard[score].id == interaction.user.id) { scoreboard[score].score++; newUser = false; break; }
+                }
+            }
+            if (newUser){ scoreboard = scoreboard.concat({"id":interaction.user.id,"name":interaction.user.globalName,"score":1});}
+            scoreboard.sort((a, b) => b.score - a.score);
+            //fs.writeFileSync("../scoreboard.json",JSON.stringify(scoreboard, null, 2));
+            (async () => {
+                console.log(scoreboard);
+                fs.writeFile("../scoreboard.json", JSON.stringify(scoreboard), function writeJSON(err) {
+                    if (err) return console.log(err);
+                    //console.log(JSON.stringify(scoreboard));
+                    //console.log('writing to ' + "../scoreboard.json");
+                });
+            })();
+                
             if (err) console.error(err)	//handling error
             if(res[0] == "l"){interaction.reply(`The explanation for ${line.value} is locked and can't be changed.`); return;}
             (async () => {
@@ -272,5 +292,9 @@ function getRandomInt(min, max) {
     const maxFloored = Math.floor(max);
     return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
 }
+
+
+
+
 
 client.login(process.env.TOKEN);
