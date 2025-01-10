@@ -62,21 +62,30 @@ client.on("interactionCreate",(interaction) => {
     
 });
 
-function progress(interaction){
+function progress(interaction) {
     let thesilly = interaction.options.get("the-silly");
     if (thesilly === null) thesilly = false;
-    if (thesilly.value != true){
-        fs.readFile("./src/scores/explanations.json", function(err, data){
+    if (thesilly.value != true) {
+        fs.readFile("./src/scores/explanations.json", function (err, data) {
             let explanations = JSON.parse(data);
             getVideoCount(CHANNEL_ID).then((count) => {
                 let locks = 0;
-                for (let i = 0;i < count;i++){
+                for (let i = 0; i < count; i++) {
                     if (explanations[i].locked) locks++;
                 }
-                interaction.reply(`We have locked explanations for ${locks}/${count} or about ${Math.round((locks/count)*100)}% of videos! :heart:`);
+                const hearts = [
+                    ":pink_heart:", ":heart:", ":orange_heart:", ":yellow_heart:", 
+                    ":green_heart:", ":light_blue_heart:", ":blue_heart:", 
+                    ":purple_heart:", ":black_heart:", ":grey_heart:", 
+                    ":white_heart:", ":brown_heart:"
+                ];
+                const randomHeart = hearts[Math.floor(Math.random() * hearts.length)];
+                interaction.reply(`We have locked explanations for ${locks}/${count} or about ${Math.round((locks / count) * 100)}% of videos! ${randomHeart}`);
             });
         });
-    } else interaction.reply(silly[getRandomInt(0,silly.length-1)]);
+    } else {
+        interaction.reply(silly[getRandomInt(0, silly.length - 1)]);
+    }
 }
 function progress(interaction){
     let list = interaction.options.get("list");
