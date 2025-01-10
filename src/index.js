@@ -78,6 +78,22 @@ function progress(interaction){
         });
     } else interaction.reply(silly[getRandomInt(0,silly.length-1)]);
 }
+function progress(interaction){
+    let list = interaction.options.get("list");
+    if (thesilly === null) thesilly = false;
+    fs.readFile("./src/scores/explanations.json", function(err, data){
+        let explanations = JSON.parse(data);
+        getVideoCount(CHANNEL_ID).then((count) => {
+            let locks = 0;
+            let episodes = [];
+            for (let i = 0;i < count;i++){
+                if (!explanations[i].locked) {locks++; episodes = episodes.concat(i+1);}
+            }
+            interaction.reply(`We have ${locks} remaining videos to explain!`);
+            interaction.user.send(episodes.toString());
+        });
+    });
+}
 
 function appoint(interaction){
     if(interaction.context == 1 || interaction.context == 2) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}

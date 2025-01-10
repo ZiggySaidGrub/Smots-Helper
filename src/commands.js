@@ -140,7 +140,20 @@ const commands = [
         ],
         integration_types:[0,1],
         contexts:[0,1,2]
-    }
+    },
+    {
+        name:"remaining",
+        description:"Tells you the how many videos are left to be explained.",
+        options:[
+            {
+                name:"list",
+                "description":"Will DM you a list of all the smots gaming episodes yet to be explained.",
+                type:ApplicationCommandOptionType.Boolean
+            }
+        ],
+        integration_types:[0,1],
+        contexts:[0,1,2]
+    },
 ];
 
 const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
