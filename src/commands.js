@@ -128,6 +128,19 @@ const commands = [
         "integration_types":[0,1],
         "contexts":[0,1,2]
     },
+    {
+        name:"progress",
+        description:"Tells you the precentage of videos we've explained.",
+        options:[
+            {
+                name:"the-silly",
+                "description":"do the silly",
+                type:ApplicationCommandOptionType.Boolean
+            }
+        ],
+        integration_types:[0,1],
+        contexts:[0,1,2]
+    }
 ];
 
 const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
