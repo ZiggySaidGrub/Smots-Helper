@@ -45,6 +45,7 @@ client.on("interactionCreate",(interaction) => {
     if (interaction.commandName == "submit"){ submit(interaction); return; }
 
     if (interaction.commandName == "progress"){ progress(interaction); return; }
+    if (interaction.commandName == "remaining"){ remaining(interaction); return; }
     
     
     
@@ -87,7 +88,7 @@ function progress(interaction) {
         interaction.reply(silly[getRandomInt(0, silly.length - 1)]);
     }
 }
-function progress(interaction){
+function remaining(interaction){
     let list = interaction.options.get("list");
     if (thesilly === null) thesilly = false;
     fs.readFile("./src/scores/explanations.json", function(err, data){
