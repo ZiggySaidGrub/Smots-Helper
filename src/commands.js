@@ -154,6 +154,18 @@ const commands = [
         integration_types:[0,1],
         contexts:[0,1,2]
     },
+    {
+        name:"whatdoido",
+        description:"Gets a random video with an empty explanation.",
+        integration_types:[0,1],
+        contexts:[0,1,2]
+    },
+    {
+        name:"curate",
+        description:"Gets a random video with an unlocked explanation.",
+        integration_types:[0,1],
+        contexts:[0,1,2]
+    },
 ];
 
 const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);

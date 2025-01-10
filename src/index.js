@@ -52,6 +52,9 @@ client.on("interactionCreate",(interaction) => {
     if (interaction.commandName == "lock"){ lock(interaction); return; }
     if (interaction.commandName == "appoint"){ appoint(interaction); return; }
 
+    if (interaction.commandName == "whatdoido"){ whatdoido(interaction, true); return; }
+    if (interaction.commandName == "curate"){ whatdoido(interaction, false); return; }
+
     if (interaction.commandName == "list"){ 
         interaction.user.send({files:["./src/scores/explanations.json"]});
         interaction.reply({content:"mrrrp :3", ephemeral:true});
@@ -62,6 +65,36 @@ client.on("interactionCreate",(interaction) => {
         
     
 });
+
+function whatdoido(interaction, idk){
+    let message = "wow looks like this idiot doesn't know how to code";
+    fs.readFile("./src/scores/explanations.json", function (err, data) {
+        let explanations = JSON.parse(data);
+        getVideoCount(CHANNEL_ID).then((count) => { 
+            /*let randomvid = getRandomInt(1,count)
+            if(idk){
+                while(explanations[randomvid-1].content != ""){
+                    randomvid = getRandomInt(1,count)
+                }
+            } else {
+                while(explanations[randomvid-1].locked){
+                    randomvid = getRandomInt(1,count)
+                }
+            }*/
+            let list = [];
+            for (let i = 0;i < explanations.length;i++){
+                if(explanations[i].content = "" && idk) list = list.concat(i+1);
+                if(explanations[i].content != "" && !explanations[i].locked && !idk) list = list.concat(i+1);
+            }
+            let randomvid = list[getRandomInt(0,list.length-1)];
+            getNthVideo(CHANNEL_ID, randomvid).then((video) => {
+                message = (`Episode:[ ${randomvid}](${video.url})`);
+                
+                interaction.reply(message);
+            }); 
+        });
+    });
+}
 
 function progress(interaction) {
     let thesilly = interaction.options.get("the-silly");
@@ -90,7 +123,7 @@ function progress(interaction) {
 }
 function remaining(interaction){
     let list = interaction.options.get("list");
-    if (thesilly === null) thesilly = false;
+    if (list === null) list = false;
     fs.readFile("./src/scores/explanations.json", function(err, data){
         let explanations = JSON.parse(data);
         getVideoCount(CHANNEL_ID).then((count) => {
@@ -100,7 +133,7 @@ function remaining(interaction){
                 if (!explanations[i].locked) {locks++; episodes = episodes.concat(i+1);}
             }
             interaction.reply(`We have ${locks} remaining videos to explain!`);
-            interaction.user.send(episodes.toString());
+            if(list) interaction.user.send(episodes.toString());
         });
     });
 }
