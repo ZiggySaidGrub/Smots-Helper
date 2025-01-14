@@ -181,7 +181,9 @@ const commands = [
                 description:"What argument to enter for the command.",
                 type:ApplicationCommandOptionType.String
             }
-        ]
+        ],
+        integration_types:[0,1],
+        contexts:[0,1,2]
     },
 ];
 

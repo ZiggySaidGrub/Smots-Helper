@@ -21,16 +21,24 @@ const client = new Client({
     ]
 });
 
+
 client.on("ready", (c) => {
     console.log(`✅ ${c.user.tag} is now online. ✅`);
     client.user.setActivity({
         name:"smots gaming",
         type:ActivityType.Watching,
     });
+    
 });
 
 
-client.on("interactionCreate",(interaction) => {
+client.on("interactionCreate", async (interaction) => {
+    const guild = client.guilds.cache.get(process.env.GUILD_ID);
+    const members = await guild.members.fetch();
+    
+    
+    
+
     //if (interaction.context == 1) {interaction.reply("smots gaming"); return;}
     if (!interaction.isChatInputCommand()) return;
     if (interaction.commandName == "smots"){ smots(interaction); return; }
@@ -55,7 +63,7 @@ client.on("interactionCreate",(interaction) => {
     if (interaction.commandName == "whatdoido"){ whatdoido(interaction, true); return; }
     if (interaction.commandName == "curate"){ whatdoido(interaction, false); return; }
 
-    if (interaction.commandName == "smonsole"){ smonsole(interaction); return; }
+    if (interaction.commandName == "smonsole"){ smonsole(interaction, members); return; }
 
     if (interaction.commandName == "list"){ 
         interaction.user.send({files:["./src/scores/explanations.json"]});
@@ -69,16 +77,16 @@ client.on("interactionCreate",(interaction) => {
 });
 
 
-function smonsole(interaction){
+function smonsole(interaction,members){
     let name = interaction.options.get("command").value;
     let arg = interaction.options.get("argument")?.value;
     fs.readFile("./src/scores/smonsole.json", function (err, data) {
         let commands = JSON.parse(data);
 
-        if (!(name in commands)){interaction.reply(`The command\n\`$${name}\`\ndoesn't exist.`); return;}
+        if (!(name in commands)){interaction.reply({content:`The command\n\`$${name}\`\ndoesn't exist.`,ephemeral:true}); return;}
 
         let f = new Function(commands[name].arguments, commands[name].body);
-        f(interaction,arg);
+        f(interaction,arg,members);
 
     });
 }
