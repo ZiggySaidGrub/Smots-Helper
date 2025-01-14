@@ -55,6 +55,8 @@ client.on("interactionCreate",(interaction) => {
     if (interaction.commandName == "whatdoido"){ whatdoido(interaction, true); return; }
     if (interaction.commandName == "curate"){ whatdoido(interaction, false); return; }
 
+    if (interaction.commandName == "smonsole"){ smonsole(interaction); return; }
+
     if (interaction.commandName == "list"){ 
         interaction.user.send({files:["./src/scores/explanations.json"]});
         interaction.reply({content:"mrrrp :3", ephemeral:true});
@@ -66,29 +68,40 @@ client.on("interactionCreate",(interaction) => {
     
 });
 
+
+function smonsole(interaction){
+    let name = interaction.options.get("command").value;
+    let arg = interaction.options.get("argument")?.value;
+    fs.readFile("./src/scores/smonsole.json", function (err, data) {
+        let commands = JSON.parse(data);
+
+        if (!(name in commands)){interaction.reply(`The command\n\`$${name}\`\ndoesn't exist.`); return;}
+
+        let f = new Function(commands[name].arguments, commands[name].body);
+        f(interaction,arg);
+
+    });
+}
+
+
+
 function whatdoido(interaction, idk){
     let message = "wow looks like this idiot doesn't know how to code";
     fs.readFile("./src/scores/explanations.json", function (err, data) {
         let explanations = JSON.parse(data);
         getVideoCount(CHANNEL_ID).then((count) => { 
-            /*let randomvid = getRandomInt(1,count)
-            if(idk){
-                while(explanations[randomvid-1].content != ""){
-                    randomvid = getRandomInt(1,count)
-                }
-            } else {
-                while(explanations[randomvid-1].locked){
-                    randomvid = getRandomInt(1,count)
-                }
-            }*/
             let list = [];
-            for (let i = 0;i < explanations.length;i++){
-                if(explanations[i].content = "" && idk) list = list.concat(i+1);
+            for (let i = 0;i < count;i++){
+                if(explanations[i].content == "" && idk) list = list.concat(i+1);
                 if(explanations[i].content != "" && !explanations[i].locked && !idk) list = list.concat(i+1);
+                //list = list.concat(i+1);
             }
-            let randomvid = list[getRandomInt(0,list.length-1)];
+            if (list.length < 1) {interaction.reply("No videos found"); return;}
+            let randomvid = list[Math.floor(Math.random() * list.length)];
+            console.log(randomvid);
             getNthVideo(CHANNEL_ID, randomvid).then((video) => {
-                message = (`Episode:[ ${randomvid}](${video.url})`);
+                if (idk) message = `Not sure what to do? How about you help by explaining this video! \nUse /submit [[${randomvid}](${video.url})] and write an explanation for the video.`;
+                if (!idk) message = `Wanna help out a little more in depth? How about you help make this explanation better! Use /explain [[${randomvid}](${video.url})] and /submit [[${randomvid}](<${video.url}>)]\nThe current explanation is:\n${explanations[randomvid-1].content}`;
                 
                 interaction.reply(message);
             }); 
@@ -104,21 +117,23 @@ function progress(interaction) {
             let explanations = JSON.parse(data);
             getVideoCount(CHANNEL_ID).then((count) => {
                 let locks = 0;
+                let filled = 0;
                 for (let i = 0; i < count; i++) {
                     if (explanations[i].locked) locks++;
+                    if (explanations[i].content != "") filled++;
                 }
                 const hearts = [
                     ":pink_heart:", ":heart:", ":orange_heart:", ":yellow_heart:", 
                     ":green_heart:", ":light_blue_heart:", ":blue_heart:", 
                     ":purple_heart:", ":black_heart:", ":grey_heart:", 
-                    ":white_heart:", ":brown_heart:"
+                    ":white_heart:", ":brown_heart:", ":3", "<:smotsheart:1327432522518237254>"
                 ];
                 const randomHeart = hearts[Math.floor(Math.random() * hearts.length)];
-                interaction.reply(`We have locked explanations for ${locks}/${count} or about ${Math.round((locks / count) * 100)}% of videos! ${randomHeart}`);
+                interaction.reply(`We have locked explanations for ${locks}/${count} or about ${Math.round((locks / count) * 100)}% and filled out explanations for ${filled}/${count} or about ${Math.round((filled / count) * 100)}% of videos! ${randomHeart}`);
             });
         });
     } else {
-        interaction.reply(silly[getRandomInt(0, silly.length - 1)]);
+        interaction.reply(silly[Math.floor(Math.random() * silly.length)]);
     }
 }
 function remaining(interaction){
@@ -139,41 +154,26 @@ function remaining(interaction){
 }
 
 function appoint(interaction){
-    if(interaction.context == 1 || interaction.context == 2) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
-    let urole = interaction.member.roles.cache.find(role => role.name === 'smots modding');
-    if(urole === undefined) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
-    
-    let user = interaction.options.get("user")
-    assignRoleToUser(process.env.GUILD_ID,user.value,"1325282371838152795");
-    assignRoleToUser(process.env.GUILD_ID,user.value,"1326332341894778890");
-    console.log(user);
-    interaction.reply(`Gave ${user.user.globalName} the smots modding role`);
-    
+    fs.readFile("./src/scores/mods.json", function(err, data){
+        let mods = JSON.parse(data);
+        let mod = mods.includes(interaction.user.id);
+
+        
+        if(!mod) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
+        
+        let user = interaction.options.get("user");
+        let username = user.user.globalName;
+        if (username == null) username = user.user.username;
+        if (mods.includes(user.value)) {interaction.reply(`${username} already is a mod.`); return;}
+        mods = mods.concat(user.value);
+        fs.writeFileSync("./src/scores/mods.json",JSON.stringify(mods, null, 2));
+
+        interaction.reply(`Added ${username} to the list of mods.`);
+    });
 }
 
 
 
-async function assignRoleToUser(guildId, userId, roleId) {
-    try {
-        // Fetch the guild (server) by its ID
-        const guild = await client.guilds.fetch(guildId);
-        if (!guild) {
-            throw new Error('Guild not found');
-        }
-
-        // Fetch the member (user) by their ID
-        const member = await guild.members.fetch(userId);
-        if (!member) {
-            throw new Error('User not found in the guild');
-        }
-
-        // Assign the role to the user
-        await member.roles.add(roleId);
-        console.log(`Role ${roleId} assigned to user ${userId}`);
-    } catch (error) {
-        console.error(`Failed to assign role: ${error.message}`);
-    }
-}
 
 
 
@@ -183,6 +183,7 @@ function explain(interaction){
         let explanations = JSON.parse(data);
         getVideoCount(CHANNEL_ID).then((count) => {
             if (!lineNumber) lineNumber = {value:count};
+            if (lineNumber > count) {interaction.reply("That video doesn't exist!");return;}
             let data = explanations[lineNumber.value-1];
             if (data.content == "") { 
                 if (lineNumber.value > count){ interaction.reply("That video doesn't exist!"); return; }
@@ -215,63 +216,57 @@ function submit(interaction){
         let i = line.value-1;
         getVideoCount(CHANNEL_ID).then((count) => { 
             if (line.value > count) { interaction.reply("That video doesn't exist!"); return;}
-        });
-        if(explanations[i].locked){interaction.reply(`The explanation for ${line.value} is locked and can't be changed.`); return;}
-        
-        let newUser = true;
-        if (scoreboard.length > 0){
-            for (let score = 0; score < scoreboard.length;score++) {
-                if (scoreboard[score].id == interaction.user.id) { scoreboard[score].score++; newUser = false; break; }
+            if(explanations[i].locked){interaction.reply(`🔒 The explanation for ${line.value} is locked and can't be changed. 🔒`); return;}
+            
+            let username = interaction.user.globalName;
+            if (username == null) username = interaction.user.username;
+            
+            let newUser = true;
+            if (scoreboard.length > 0){
+                for (let score = 0; score < scoreboard.length;score++) {
+                    if (scoreboard[score].id == interaction.user.id) { scoreboard[score].score++; newUser = false; break; }
+                }
             }
-        }
-        if (newUser){ scoreboard = scoreboard.concat({"id":interaction.user.id,"name":interaction.user.globalName,"score":1});}
-        scoreboard.sort((a, b) => b.score - a.score);
-        fs.writeFileSync("./src/scores/scoreboard.json",JSON.stringify(scoreboard, null, 2));
-        
-        explanations[i].content = content.value;
-        explanations[i].user.id = interaction.user.id;
-        explanations[i].user.name = interaction.user.globalName;
-
-        console.log(explanations[i]); // write to file
-        fs.writeFileSync("./src/scores/explanations.json",JSON.stringify(explanations, null, 2));
-        interaction.reply(`Explanation submited for episode ${line.value}!`);
+            if (newUser){ scoreboard = scoreboard.concat({"id":interaction.user.id,"name":username,"score":1});}
+            scoreboard.sort((a, b) => b.score - a.score);
+            fs.writeFileSync("./src/scores/scoreboard.json",JSON.stringify(scoreboard, null, 2));
+            
+            explanations[i].content = content.value;
+            explanations[i].user.id = interaction.user.id;
+            explanations[i].user.name = username;
+            
+            console.log(explanations[i]); // write to file
+            fs.writeFileSync("./src/scores/explanations.json",JSON.stringify(explanations, null, 2));
+            interaction.reply(`Explanation submited for episode ${line.value}!`);
+        });
     });
 }
 
 function lock(interaction){
-    if(interaction.context == 1 || interaction.context == 2) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
     let urole = interaction.member.roles.cache.find(role => role.name === 'smots modding');
     let line = interaction.options.get("episode");
     let lockvalue = interaction.options.get("locked").value;
     fs.readFile("./src/scores/explanations.json", function(err, data){
-        let explanations = JSON.parse(data);
-        let i = line.value-1;
-        
-        let lockmsg = "";
-        if(urole === undefined) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
-        getVideoCount(CHANNEL_ID).then((count) => { 
-            if (line.value > count) { interaction.reply("That video doesn't exist!"); return;}
-            /*rl.oneline('./explain.txt', line.value, function(err, res) {
-                if (err) console.error(err)	//handling error
-
-                if (lockvalue) {lockvalue = "l"; lockmsg = "locked";} 
-                else {lockvalue = "u"; lockmsg = "unlocked";}
-
-                (async () => {
-                    await writeToLine("./explain.txt",line.value-1,lockvalue + res.slice(1));
-                })();
-                interaction.reply(`Explanation ${lockmsg} for episode ${line.value}!`);
+        fs.readFile("./src/scores/mods.json", function(err, data2){
+            let mods = JSON.parse(data2);
+            let mod = mods.includes(interaction.user.id);
+            let explanations = JSON.parse(data);
+            let i = line.value-1;
+            
+            let lockmsg = "";
+            if(!mod) {interaction.reply({content:"ur not a mod buckarro :joy: 🦐",ephemeral:true}); return;}
+            getVideoCount(CHANNEL_ID).then((count) => { 
+                if (line.value > count) { interaction.reply("That video doesn't exist!"); return;}
+                explanations[i].locked = lockvalue;
                 
-            });*/
+                if (lockvalue) {lockmsg = "locked";} 
+                else {lockmsg = "unlocked";}
+                
+                console.log(explanations[i]); // write to file
+                fs.writeFileSync("./src/scores/explanations.json",JSON.stringify(explanations, null, 2));
+                interaction.reply(`Explanation ${lockmsg} for episode ${line.value}!`);
+            });
         });
-        explanations[i].locked = lockvalue;
-
-        if (lockvalue) {lockmsg = "locked";} 
-        else {lockmsg = "unlocked";}
-
-        console.log(explanations[i]); // write to file
-        fs.writeFileSync("./src/scores/explanations.json",JSON.stringify(explanations, null, 2));
-        interaction.reply(`Explanation ${lockmsg} for episode ${line.value}!`);
     });
 }
 

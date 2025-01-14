@@ -166,6 +166,23 @@ const commands = [
         integration_types:[0,1],
         contexts:[0,1,2]
     },
+    {
+        name:"smonsole",
+        description:"A console for smots helper for secret commands",
+        options:[
+            {
+                name:"command",
+                description:"What to enter in the console.",
+                required:true,
+                type:ApplicationCommandOptionType.String
+            },
+            {
+                name:"argument",
+                description:"What argument to enter for the command.",
+                type:ApplicationCommandOptionType.String
+            }
+        ]
+    },
 ];
 
 const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
@@ -179,12 +196,12 @@ const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
             ),
             { body:commands }
         );
-        await rest.put(
+        /*await rest.put(
             Routes.applicationGuildCommands(
                 process.env.CLIENT_ID,process.env.GUILD_ID
             ),
             { body:commands }
-        );
+        );*/
         
         console.log("✅ Slash commands were registered. ✅")
     } catch (error) {
