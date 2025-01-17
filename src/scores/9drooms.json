@@ -1,0 +1,102 @@
+[
+  {
+    "cp": "ST",
+    "rooms": 12
+  },
+  {
+    "cp": "PS",
+    "rooms": 7
+  },
+  {
+    "cp": "GOF",
+    "rooms": 10
+  },
+  {
+    "cp": "CU",
+    "rooms": 10
+  },
+  {
+    "cp": "DE",
+    "rooms": 9
+  },
+  {
+    "cp": "ME",
+    "rooms": 11
+  },
+  {
+    "cp": "CR",
+    "rooms": 9
+  },
+  {
+    "cp": "EX",
+    "rooms": 19
+  },
+  {
+    "cp": "DEP",
+    "rooms": 16
+  },
+  {
+    "cp": "TR",
+    "rooms": 9
+  },
+  {
+    "cp": "SE",
+    "rooms": 12
+  },
+  {
+    "cp": "REV",
+    "rooms": 23
+  },
+  {
+    "cp": "BK",
+    "rooms": 23
+  },
+  {
+    "cp": "SMOTS",
+    "rooms": 30
+  },
+  {
+    "cp": "SR",
+    "rooms": 5
+  },
+  {
+    "cp": "GOTM",
+    "rooms": 14
+  },
+  {
+    "cp": "HB",
+    "rooms": 11
+  },
+  {
+    "cp": "RZ",
+    "rooms": 8
+  },
+  {
+    "cp": "PAR-PL",
+    "rooms": 11
+  },
+  {
+    "cp": "TL",
+    "rooms": 10
+  },
+  {
+    "cp": "REU",
+    "rooms": 5
+  },
+  {
+    "cp": "PONR",
+    "rooms": 9
+  },
+  {
+    "cp": "MAC",
+    "rooms": 12
+  },
+  {
+    "cp": "BO",
+    "rooms": 22
+  },
+  {
+    "cp": "FG",
+    "rooms": 15
+  }
+]

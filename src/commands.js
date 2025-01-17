@@ -9,7 +9,7 @@ const commands = [
             {
                 name:"episode",
                 description:"Which smots episode to view?",
-                type:ApplicationCommandOptionType.Number,
+                type:ApplicationCommandOptionType.Integer,
                 required:true
 
             }
@@ -37,7 +37,7 @@ const commands = [
             {
                 name:"episode",
                 description:"Which smots episode to look for comments on?",
-                type:ApplicationCommandOptionType.Number,
+                type:ApplicationCommandOptionType.Integer,
                 required:true
 
             },
@@ -58,7 +58,7 @@ const commands = [
             {
                 name:"episode",
                 description:"Which smots episode to explain?",
-                type:ApplicationCommandOptionType.Number,
+                type:ApplicationCommandOptionType.Integer,
                 required:false
 
             },
@@ -73,7 +73,7 @@ const commands = [
             {
                 name:"episode",
                 description:"Which smots episode to explain?",
-                type:ApplicationCommandOptionType.Number,
+                type:ApplicationCommandOptionType.Integer,
                 required:true
 
             },
@@ -94,7 +94,7 @@ const commands = [
             {
                 name:"episode",
                 description:"Which smots episode to lock explanations for?",
-                type:ApplicationCommandOptionType.Number,
+                type:ApplicationCommandOptionType.Integer,
                 required:true
 
             },
@@ -184,6 +184,160 @@ const commands = [
         ],
         integration_types:[0,1],
         contexts:[0,1,2]
+    },
+    {
+        name:"9dg-new-game",
+        description:"Start a new game of 9d Guessr",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+        options:[
+            {
+                name:"rounds",
+                description:"How many rounds?",
+                type:ApplicationCommandOptionType.Integer,
+                required:true,
+                choices:[
+                    {
+                        name:"5",
+                        value:5
+                    },
+                    {
+                        name:"10",
+                        value:10
+                    },
+                    {
+                        name:"15",
+                        value:15
+                    },
+                    {
+                        name:"20",
+                        value:20
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        name:"9dg-guess",
+        description:"Guess what room it is!",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+        options:[
+            {
+                name:"checkpoint",
+                description:"Which checkpoint is the picture?",
+                type:ApplicationCommandOptionType.String,
+                required:true,
+                choices:[
+                    {
+                        name:"ST",
+                        value:"ST"
+                    },
+                    {
+                        name:"PS",
+                        value:"PS"
+                    },
+                    {
+                        name:"GOF",
+                        value:"GOF"
+                    },
+                    {
+                        name:"CU",
+                        value:"CU"
+                    },
+                    {
+                        name:"DE",
+                        value:"DE"
+                    },
+                    {
+                        name:"ME",
+                        value:"ME"
+                    },
+                    {
+                        name:"CR",
+                        value:"CR"
+                    },
+                    {
+                        name:"EX",
+                        value:"EX"
+                    },
+                    {
+                        name:"DEP",
+                        value:"DEP"
+                    },
+                    {
+                        name:"TR",
+                        value:"TR"
+                    },
+                    {
+                        name:"SE",
+                        value:"SE"
+                    },
+                    {
+                        name:"REV",
+                        value:"REV"
+                    },
+                    {
+                        name:"BK",
+                        value:"BK"
+                    },
+                    {
+                        name:"SMOTS",
+                        value:"SMOTS"
+                    },
+                    {
+                        name:"SR",
+                        value:"SR"
+                    },
+                    {
+                        name:"GOTM",
+                        value:"GOTM"
+                    },
+                    {
+                        name:"HB",
+                        value:"HB"
+                    },
+                    {
+                        name:"RZ",
+                        value:"RZ"
+                    },
+                    {
+                        name:"PAR-PL",
+                        value:"PAR-PL"
+                    },
+                    {
+                        name:"TL",
+                        value:"TL"
+                    },
+                    {
+                        name:"REU",
+                        value:"REU"
+                    },
+                    {
+                        name:"PONR",
+                        value:"PONR"
+                    },
+                    {
+                        name:"MAC",
+                        value:"MAC"
+                    },
+                    {
+                        name:"BO",
+                        value:"BO"
+                    },
+                    {
+                        name:"FG",
+                        value:"FG"
+                    }
+                ]
+            },
+            {
+                name:"room",
+                description:"Which room number is the picture?",
+                type:ApplicationCommandOptionType.Integer,
+                required:true
+            }
+        ]
     },
 ];
 
