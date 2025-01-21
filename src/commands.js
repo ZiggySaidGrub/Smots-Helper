@@ -339,6 +339,12 @@ const commands = [
             }
         ]
     },
+    {
+        name:"9dg-end-game",
+        description:"Ends your current game of 9d Guessr.",
+        integration_types:[0,1],
+        contexts:[0,1,2]
+    },
 ];
 
 const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);

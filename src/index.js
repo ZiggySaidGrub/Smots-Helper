@@ -79,30 +79,59 @@ client.on("interactionCreate", async (interaction) => {
     // EPIC: The musical, the 9DP Saga. Releases July 16th
     if (interaction.commandName == "9dg-new-game"){ newgame(interaction); return;}
     if (interaction.commandName == "9dg-guess"){ guess(interaction); return;}
+    if (interaction.commandName == "9dg-end-game"){ endgame(interaction); return;}
     
         
     
 });
+
+function endgame(interaction){
+    fs.readFile("./src/scores/9dg.json", function (err, data) {
+        let games = JSON.parse(data);
+
+        if (games[interaction.user.id] == undefined){interaction.reply({content:"You don't have a game running!",ephemeral:true});return;}
+
+        games[interaction.user.id] = undefined;
+        fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
+        interaction.reply({content:"Game ended!",ephemeral:true});
+    });
+}
 
 function newgame(interaction){
     let rounds = interaction.options.get("rounds").value;
     fs.readFile("./src/scores/9dg.json", function (err, data) {
         let games = JSON.parse(data);
         if (games[interaction.user.id] != undefined){interaction.reply({content:"You already have a game running!",ephemeral:true});return;}
-        const checkpoints = fs.readdirSync(nined);
-        const checkpoint = checkpoints[Math.floor(Math.random() * checkpoints.length)];
-        const rooms = fs.readdirSync(nined+"/"+checkpoint);
-        const room = rooms[Math.floor(Math.random() * rooms.length)];
-        const pics = fs.readdirSync(nined+"/"+checkpoint+"/"+room);
-        let pic = pics[Math.floor(Math.random() * pics.length)];
 
-        if (pic == "cat.png" && getRandomInt(1,10000) != 1) pic = "image.png"
+        let roomslist = [];
+        let smollist = [];
+
+        for (let i = 0; i < rounds; i++){
+            let checkpoints = fs.readdirSync(nined);
+            let checkpoint = checkpoints[Math.floor(Math.random() * checkpoints.length)];
+            let rooms = fs.readdirSync(nined+"/"+checkpoint);
+            let room = rooms[Math.floor(Math.random() * rooms.length)];
+            let pics = fs.readdirSync(nined+"/"+checkpoint+"/"+room);
+            let pic = pics[Math.floor(Math.random() * pics.length)];
+    
+            if (pic == "cat.png" && getRandomInt(1,1000) != 1) pic = "image.png"
+
+            if (smollist.includes(`${checkpoint}${room}`)){
+                i--;
+            } else{
+                roomslist = roomslist.concat({
+                    "checkpoint":checkpoint,
+                    "room":room,
+                    "path":`${nined}/${checkpoint}/${room}/${pic}`
+                });
+                smollist = smollist.concat(`${checkpoint}${room}`);
+            }
+        }
 
         games[interaction.user.id] = {
             "rounds":rounds,
             "round":1,
-            "checkpoint":checkpoint,
-            "room":room,
+            "rooms":roomslist,
             "points":0,
             "user":{
                 "username":interaction.user.username,
@@ -112,7 +141,7 @@ function newgame(interaction){
         };
         
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
-        interaction.reply({content:`Round has started <@${interaction.user.id}>!\nRound:1/${rounds}`,files:[`${nined}/${checkpoint}/${room}/${pic}`]});
+        interaction.reply({content:`Game has started <@${interaction.user.id}>!\nRound:1/${rounds}`,files:[games[interaction.user.id]["rooms"][0]["path"]]});
     });
 }
 
@@ -120,10 +149,11 @@ function guess(interaction){
     fs.readFile("./src/scores/9dg.json", function (err, data) {
         let games = JSON.parse(data);
         if (games[interaction.user.id] == undefined){interaction.reply({content:"You don't have a game running!",ephemeral:true});return;}
-        let checkpoint = interaction.options.get("checkpoint").value.toString();
+        let checkpoint = interaction.options.get("checkpoint").value;
         let roomnum = interaction.options.get("room").value;
-        let cpa = games[interaction.user.id].checkpoint;
-        let rna = games[interaction.user.id].room;
+        let currentround = games[interaction.user.id].round-1;
+        let cpa = games[interaction.user.id].rooms[currentround].checkpoint;
+        let rna = games[interaction.user.id].rooms[currentround].room;
         let points = 0;
 
         let lowerlimit = ()=>{
@@ -137,12 +167,12 @@ function guess(interaction){
             }
             return total;
         };
-        let lower = false;
         let roomdist = ()=>{
+            let lower = false;
             let total = 0;
             for (let i = 0; i < fgcps.length; i++){
                 if (fgcps[i].cp == cpa) {
-                    if(!(checkpoint == cpa && parseInt(roomnum) < parseInt(rna))) lower = true;
+                    if(!(checkpoint == cpa && roomnum < parseInt(rna))) lower = true;
                     
                 }
                 if (fgcps[i].cp == checkpoint) {
@@ -157,54 +187,27 @@ function guess(interaction){
                 return lowerlimit()-total;
             }
         };
-        
         points = Math.ceil(5000 / (1 + (roomdist() * 0.05)));
-
-        //if (checkpoint == cpa && roomnum == rna) points = 5000;
         
         games[interaction.user.id].points += points;
 
 
         if (games[interaction.user.id].round == games[interaction.user.id].rounds) {
-            interaction.reply(`The room was **${games[interaction.user.id].checkpoint}-${games[interaction.user.id].room}**.  You scored **${points}** points!\nGame Over!\nYou scored **${games[interaction.user.id].points}**/${games[interaction.user.id].rounds*5000}.`);
+            interaction.reply(`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nGame Over!\nYou scored **${games[interaction.user.id].points}**/${games[interaction.user.id].rounds*5000}.`);
             games[interaction.user.id] = undefined;
             fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
             return;
         }
 
-        const checkpoints = fs.readdirSync(nined);
-        checkpoint = checkpoints[Math.floor(Math.random() * checkpoints.length)];
-        const rooms = fs.readdirSync(nined+"/"+checkpoint);
-        const room = rooms[Math.floor(Math.random() * rooms.length)];
-        const pics = fs.readdirSync(nined+"/"+checkpoint+"/"+room);
-        let pic = pics[Math.floor(Math.random() * pics.length)];
-        if (pic == "cat.png" && getRandomInt(1,10000) != 1) pic = "image.png"
-
-        const oldcheck = games[interaction.user.id].checkpoint
-        const oldroom = games[interaction.user.id].room
-
-        games[interaction.user.id] = {
-            "rounds":games[interaction.user.id].rounds,
-            "round":games[interaction.user.id].round+1,
-            "checkpoint":checkpoint,
-            "room":room,
-            "points":games[interaction.user.id].points,
-            "user":{
-                "username":interaction.user.username,
-                "globalname":interaction.user.globalName,
-                "id":interaction.user.id
-            }
-        };
-        
+        games[interaction.user.id].round++;
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
-        interaction.reply({content:`The room was **${oldcheck}-${oldroom}**. You scored **${points}** points!\nRound has started <@${interaction.user.id}>!\nRound:${games[interaction.user.id].round}/${games[interaction.user.id].rounds}`,files:[`${nined}/${checkpoint}/${room}/${pic}`]});
+        
+        interaction.reply({content:`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nRound has started <@${interaction.user.id}>!\nRound:${currentround+2}/${games[interaction.user.id].rounds}`,files:[games[interaction.user.id]["rooms"][currentround+1]["path"]]});
     });
 }
 
 
 function smonsole(interaction,members){
-    
-    //if(interaction.context == 1 || interaction.context == 2){interaction.reply({content:"This command only works in servers with the bot installed.",ephemeral:true}); return;}
 
     let name = interaction.options.get("command").value;
     let arg = interaction.options.get("argument")?.value;
