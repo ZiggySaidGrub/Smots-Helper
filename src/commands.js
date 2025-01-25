@@ -214,6 +214,17 @@ const commands = [
                         value:20
                     }
                 ]
+            },
+            {
+                name:"multiplayer",
+                description:"Is it a multiplayer game or not?",
+                type:ApplicationCommandOptionType.Boolean,
+                required:true
+            },
+            {
+                name:"code",
+                description:">:3",
+                type:ApplicationCommandOptionType.String
             }
         ]
     },
@@ -345,6 +356,26 @@ const commands = [
         integration_types:[0,1],
         contexts:[0,1,2]
     },
+    {
+        name:"9dg-join",
+        description:"Joins a multiplayer game of 9d Guessr. ONLY WORKS IF YOU ARE IN THE SMOTS GAMING SERVER",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+        options:[
+            {
+                name:"code",
+                description:"The code of the game to join. (Example: ABCDE)",
+                type:ApplicationCommandOptionType.String,
+                required:true
+            }
+        ]
+    },
+    {
+        name:"9dg-start",
+        description:"Starts your multiplayer game of 9d Guessr. Only works if you are the host",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+    }
 ];
 
 const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);

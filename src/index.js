@@ -11,6 +11,7 @@ const nReadlines = require('n-readlines');
 const fgcps = require("./scores/9drooms.json");
 
 const silly = ["mrrrp :3", "meow :3", ":3", ":3 :3", "psspspsppsps :3", ":cat:"]
+const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 const CHANNEL_ID = "UCp7ZXAVupbsyh4V5_XXCubg";
 
@@ -37,15 +38,14 @@ client.on("ready", (c) => {
 });
 
 
-client.on("interactionCreate", async (interaction) => {
+client.on("interactionCreate", async (interaction) => { 
+    
+    if (!interaction.isChatInputCommand()) return;
+
+
     const guild = client.guilds.cache.get(process.env.GUILD_ID);
     const members = await guild.members.fetch();
-    
-    
-    
 
-    //if (interaction.context == 1) {interaction.reply("smots gaming"); return;}
-    if (!interaction.isChatInputCommand()) return;
     if (interaction.commandName == "smots"){ smots(interaction); return; }
     if (interaction.commandName == "daily-smots"){ dailysmots(interaction); return; }
     if (interaction.commandName == "random-smots"){ randomsmots(interaction); return; }
@@ -78,20 +78,89 @@ client.on("interactionCreate", async (interaction) => {
     
     // EPIC: The musical, the 9DP Saga. Releases July 16th
     if (interaction.commandName == "9dg-new-game"){ newgame(interaction); return;}
-    if (interaction.commandName == "9dg-guess"){ guess(interaction); return;}
+    if (interaction.commandName == "9dg-guess"){ 
+        fs.readFile("./src/scores/9dg.json", function (err, data) {
+            let games = JSON.parse(data);
+            if (games.users[interaction.user.id]?.code == undefined) guess(interaction); 
+            else guessmult(interaction, games.users[interaction.user.id].code);
+            return;
+        });
+    }
     if (interaction.commandName == "9dg-end-game"){ endgame(interaction); return;}
+    if (interaction.commandName == "9dg-join"){ join(interaction); return;}
+    if (interaction.commandName == "9dg-start"){ start(interaction); return;}
+
     
         
     
 });
 
+function start(interaction){
+    fs.readFile("./src/scores/9dg.json", async function (err, data) {
+        let games = JSON.parse(data);
+        if (games.users[interaction.user.id] == undefined){interaction.reply({content:"You aren't in a game!", ephemeral:true}); return;}
+        if (games.users[interaction.user.id].code == undefined){interaction.reply({content:"You aren't in a game!", ephemeral:true}); return;}
+        if (!games.mult[games.users[interaction.user.id].code].players[interaction.user.id].host){interaction.reply({content:"You aren't the host of this game!", ephemeral:true}); return;}
+        const code = games.users[interaction.user.id].code;
+        games.mult[games.users[interaction.user.id].code].started = true;
+
+        fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
+
+        for (let user in games.mult[code].players){
+            games.mult[code].players[user].done = false;
+            let found = false;
+            const guild = client.guilds.cache.get("1326330601908994112");
+            const founduser = (await guild.members.fetch()).get(user);
+            if (founduser!==undefined) {
+                founduser.send({content:`Round has started <@${user}>!\nRound:${games.mult[code].round}/${games.mult[code].rounds}`,files:[games.mult[code].rooms[games.mult[code].round-1]["path"]]});
+            }
+            
+        }
+        fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
+        
+
+    });
+}
+
+
+function join(interaction){
+    const code = interaction.options.get("code").value.toUpperCase();
+    fs.readFile("./src/scores/9dg.json", async function (err, data) {
+        let games = JSON.parse(data);
+        if (!games.mult[code]){interaction.reply({content:"That game doesn't exist!",ephemeral:true}); return;}
+        if (games.users[interaction.user.id]) {interaction.reply({content:"You are already in a game!",ephemeral:true}); return;}
+        if (games.mult[code].started) {interaction.reply({content:"That game has already started!",ephemeral:true}); return;}
+        const guild = client.guilds.cache.get("1326330601908994112");
+        const founduser = (await guild.members.fetch()).get(interaction.user.id);
+        if (founduser==undefined) {interaction.reply({content:"You are not in the smots gaming server, [please join it here](<https://discord.gg/GTXxnNRqej>).",ephemeral:true}); return;}
+        games.mult[code].players[interaction.user.id] = {
+            "points":0,
+            "host":false,
+            "done":false,
+            "username":interaction.user.username
+        };
+        games.users[interaction.user.id] = {"code":code};
+        fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
+        interaction.reply({content:`Joined game \`${code}\`!`,ephemeral:true});
+    });
+}
+
 function endgame(interaction){
     fs.readFile("./src/scores/9dg.json", function (err, data) {
         let games = JSON.parse(data);
 
-        if (games[interaction.user.id] == undefined){interaction.reply({content:"You don't have a game running!",ephemeral:true});return;}
-
-        games[interaction.user.id] = undefined;
+        if (games.users[interaction.user.id] == undefined){interaction.reply({content:"You don't have a game running!",ephemeral:true});return;}
+        if (games.users[interaction.user.id].code) {
+            games.mult[games.users[interaction.user.id].code].players[interaction.user.id] = undefined;
+            console.log(Object.keys(games.mult[games.users[interaction.user.id].code].players).length)
+            if (Object.keys(games.mult[games.users[interaction.user.id].code].players).length == 1) {
+                games.mult[games.users[interaction.user.id].code] = undefined;
+            }
+            games.users[interaction.user.id] = undefined;
+        } else {
+            games.single[interaction.user.id] = undefined;
+            games.users[interaction.user.id] = undefined;
+        }
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
         interaction.reply({content:"Game ended!",ephemeral:true});
     });
@@ -99,9 +168,81 @@ function endgame(interaction){
 
 function newgame(interaction){
     let rounds = interaction.options.get("rounds").value;
+    if (interaction.options.get("multiplayer").value){newgamemult(interaction); return;}
     fs.readFile("./src/scores/9dg.json", function (err, data) {
         let games = JSON.parse(data);
-        if (games[interaction.user.id] != undefined){interaction.reply({content:"You already have a game running!",ephemeral:true});return;}
+        if (games.users[interaction.user.id] != undefined){interaction.reply({content:"You already have a game running!",ephemeral:true});return;}
+
+        let roomslist = [];
+        let smollist = [];
+
+        let secret = interaction.options.get("code");
+        if (!secret) secret = ""; else secret = secret.value;
+        console.log(secret);
+
+        for (let i = 0; i < rounds; i++){
+            let checkpoints = fs.readdirSync(nined);
+            let checkpoint = checkpoints[Math.floor(Math.random() * checkpoints.length)];
+            let rooms = fs.readdirSync(nined+"/"+checkpoint);
+            let room = rooms[Math.floor(Math.random() * rooms.length)];
+            let pics = fs.readdirSync(nined+"/"+checkpoint+"/"+room);
+            let pic = pics[Math.floor(Math.random() * pics.length)];
+    
+
+            if (i == rounds-1 && secret == process.env.SECRET) {
+                checkpoint = "SMOTS";
+                room = "8";
+                pic = "image.png";
+
+                roomslist = roomslist.concat({
+                    "checkpoint":checkpoint,
+                    "room":room,
+                    "path":`${nined}/${checkpoint}/${room}/${pic}`
+                });
+                break;
+            }
+
+            if (pic == "cat.png" && getRandomInt(1,1000) != 1) pic = "image.png"
+
+            if (smollist.includes(`${checkpoint}${room}`) || (secret == process.env.SECRET && checkpoint == "SMOTS" && room == "8")){
+                i--;
+            } else{
+                roomslist = roomslist.concat({
+                    "checkpoint":checkpoint,
+                    "room":room,
+                    "path":`${nined}/${checkpoint}/${room}/${pic}`
+                });
+                smollist = smollist.concat(`${checkpoint}${room}`);
+            }
+        }
+
+        games.single[interaction.user.id] = {
+            "rounds":rounds,
+            "round":1,
+            "rooms":roomslist,
+            "points":0,
+            "user":{
+                "username":interaction.user.username,
+                "globalname":interaction.user.globalName,
+                "id":interaction.user.id
+            }
+        };
+        games.users[interaction.user.id] = {};
+        
+        fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
+        interaction.reply({content:`Game has started <@${interaction.user.id}>!\nRound:1/${rounds}`,files:[games.single[interaction.user.id]["rooms"][0]["path"]]});
+    });
+}
+
+
+function newgamemult(interaction){
+    let rounds = interaction.options.get("rounds").value;
+    fs.readFile("./src/scores/9dg.json", async function (err, data) {
+        let games = JSON.parse(data);
+        if (games.users[interaction.user.id] != undefined){interaction.reply({content:"You already have a game running!",ephemeral:true});return;}
+        const guild = client.guilds.cache.get("1326330601908994112");
+        const founduser = (await guild.members.fetch()).get(interaction.user.id);
+        if (founduser==undefined) {interaction.reply({content:"You are not in the smots gaming server, [please join it here](<https://discord.gg/GTXxnNRqej>).",ephemeral:true}); return;}
 
         let roomslist = [];
         let smollist = [];
@@ -127,33 +268,46 @@ function newgame(interaction){
                 smollist = smollist.concat(`${checkpoint}${room}`);
             }
         }
+        const randomchar = ()=>{
+            return characters[Math.floor(Math.random() * characters.length)];
+        }
+        let code = randomchar() + randomchar() + randomchar() + randomchar() + randomchar();
+        while (games.mult[code]){
+            code = randomchar() + randomchar() + randomchar() + randomchar() + randomchar();
+        }
 
-        games[interaction.user.id] = {
+        games.mult[code] = {
+            "started":false,
             "rounds":rounds,
             "round":1,
             "rooms":roomslist,
-            "points":0,
-            "user":{
-                "username":interaction.user.username,
-                "globalname":interaction.user.globalName,
-                "id":interaction.user.id
-            }
+            "players":{}
         };
+        games.mult[code].players[interaction.user.id] = {
+            "points":0,
+            "host":true,
+            "done":false,
+            "username":interaction.user.username
+        }
+        games.users[interaction.user.id] = {"code":code};
         
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
-        interaction.reply({content:`Game has started <@${interaction.user.id}>!\nRound:1/${rounds}`,files:[games[interaction.user.id]["rooms"][0]["path"]]});
+        interaction.reply({content:`Game created!\nThe code is:\n\`${code}\``,ephemeral:true})
     });
 }
 
-function guess(interaction){
+
+function guessmult(interaction, code){
     fs.readFile("./src/scores/9dg.json", function (err, data) {
         let games = JSON.parse(data);
-        if (games[interaction.user.id] == undefined){interaction.reply({content:"You don't have a game running!",ephemeral:true});return;}
+        
+        if (!games.mult[code].started){interaction.reply({content:"The game hasn't started yet!",ephemeral:true});return;}
+        if (games.mult[code].players[interaction.user.id].done){interaction.reply({content:"You have already guessed on this round!",ephemeral:true});return;}
         let checkpoint = interaction.options.get("checkpoint").value;
         let roomnum = interaction.options.get("room").value;
-        let currentround = games[interaction.user.id].round-1;
-        let cpa = games[interaction.user.id].rooms[currentround].checkpoint;
-        let rna = games[interaction.user.id].rooms[currentround].room;
+        let currentround = games.mult[code].round-1;
+        let cpa = games.mult[code].rooms[currentround].checkpoint;
+        let rna = games.mult[code].rooms[currentround].room;
         let points = 0;
 
         let lowerlimit = ()=>{
@@ -189,20 +343,125 @@ function guess(interaction){
         };
         points = Math.ceil(5000 / (1 + (roomdist() * 0.05)));
         
-        games[interaction.user.id].points += points;
+        games.mult[code].players[interaction.user.id].points += points;
+        games.mult[code].players[interaction.user.id].done = true;
 
 
-        if (games[interaction.user.id].round == games[interaction.user.id].rounds) {
-            interaction.reply(`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nGame Over!\nYou scored **${games[interaction.user.id].points}**/${games[interaction.user.id].rounds*5000}.`);
-            games[interaction.user.id] = undefined;
+
+        fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
+        
+        interaction.reply({content:"Guess submitted!", ephemeral:true});
+    });
+}
+
+setInterval(()=>{
+    fs.readFile("./src/scores/9dg.json", async function (err, data) {
+        let games = JSON.parse(data);
+        for (let game in games.mult) {
+            let total = 0;
+            for (let user in games.mult[game].players){
+                if (games.mult[game].players[user].done) total++;
+            }
+            if (total == Object.keys(games.mult[game].players).length){
+                games.mult[game].round++;
+                let gameover = false;
+                for (let user in games.mult[game].players){
+                    games.mult[game].players[user].done = false;
+                    const guild = client.guilds.cache.get("1326330601908994112");
+                    const founduser = (await guild.members.fetch()).get(user);
+                    if (founduser!==undefined) {
+                        if (games.mult[game].round-1 == games.mult[game].rounds){
+                            let leaderboard = []
+                            for (let player in games.mult[game].players){
+                                leaderboard = leaderboard.concat({
+                                    "points":games.mult[game].players[player].points,
+                                    "username":games.mult[game].players[player].username
+                                });
+                            }
+                            let leaderboardtext = "";
+                            for (let i = 0; i < leaderboard.length; i++){
+                                leaderboardtext = leaderboardtext.concat(`\n${i+1}. ${leaderboard[i].username}          ${leaderboard[i].points}`);
+                            }
+                            console.log(leaderboard);
+                            leaderboard.sort((a, b) => b.points - a.points);
+                            founduser.send(`Game Over!\nYou scored ${games.mult[game].players[user].points}/${games.mult[game].rounds*5000}\`\`\`${leaderboardtext}\`\`\``);
+                            games.users[user] = undefined;
+                            gameover = true;
+                        } else {
+                            founduser.send({content:`Round has started <@${user}>!\nRound:${games.mult[game].round}/${games.mult[game].rounds}`,files:[games.mult[game].rooms[games.mult[game].round-1]["path"]]});
+                        }
+                    }
+                    
+                }
+                if(gameover){
+                    games.mult[game] = undefined;
+                }
+                fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
+            }
+        }
+    });
+},5000)
+
+
+function guess(interaction){
+    fs.readFile("./src/scores/9dg.json", function (err, data) {
+        let games = JSON.parse(data);
+        if (games.users[interaction.user.id] == undefined){interaction.reply({content:"You don't have a game running!",ephemeral:true});return;}
+        let checkpoint = interaction.options.get("checkpoint").value;
+        let roomnum = interaction.options.get("room").value;
+        let currentround = games.single[interaction.user.id].round-1;
+        let cpa = games.single[interaction.user.id].rooms[currentround].checkpoint;
+        let rna = games.single[interaction.user.id].rooms[currentround].room;
+        let points = 0;
+
+        let lowerlimit = ()=>{
+            let total = 0;
+            for (let i = 0; i < fgcps.length; i++){
+                if (fgcps[i].cp == cpa) {
+                    total += parseInt(rna);
+                    break;
+                }
+                total += fgcps[i].rooms;
+            }
+            return total;
+        };
+        let roomdist = ()=>{
+            let lower = false;
+            let total = 0;
+            for (let i = 0; i < fgcps.length; i++){
+                if (fgcps[i].cp == cpa) {
+                    if(!(checkpoint == cpa && roomnum < parseInt(rna))) lower = true;
+                    
+                }
+                if (fgcps[i].cp == checkpoint) {
+                    total += roomnum;
+                    break;
+                }
+                total += fgcps[i].rooms;
+            }
+            if (lower){
+                return total-lowerlimit();
+            } else {
+                return lowerlimit()-total;
+            }
+        };
+        points = Math.ceil(5000 / (1 + (roomdist() * 0.05)));
+        
+        games.single[interaction.user.id].points += points;
+
+
+        if (games.single[interaction.user.id].round == games.single[interaction.user.id].rounds) {
+            interaction.reply(`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nGame Over!\nYou scored **${games.single[interaction.user.id].points}**/${games.single[interaction.user.id].rounds*5000}.`);
+            games.single[interaction.user.id] = undefined;
+            games.users[interaction.user.id] = undefined;
             fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
             return;
         }
 
-        games[interaction.user.id].round++;
+        games.single[interaction.user.id].round++;
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
         
-        interaction.reply({content:`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nRound has started <@${interaction.user.id}>!\nRound:${currentround+2}/${games[interaction.user.id].rounds}`,files:[games[interaction.user.id]["rooms"][currentround+1]["path"]]});
+        interaction.reply({content:`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nRound has started <@${interaction.user.id}>!\nRound:${currentround+2}/${games.single[interaction.user.id].rounds}`,files:[games.single[interaction.user.id]["rooms"][currentround+1]["path"]]});
     });
 }
 
@@ -376,9 +635,9 @@ function submit(interaction){
             explanations[i].user.id = interaction.user.id;
             explanations[i].user.name = username;
             
-            console.log(explanations[i]); // write to file
+            let text = explanations[i].content.replaceAll("<br>","\n");
             fs.writeFileSync("./src/scores/explanations.json",JSON.stringify(explanations, null, 2));
-            interaction.reply(`Explanation submited for episode ${line.value}!`);
+            interaction.reply(`Explanation submited for episode ${line.value}!\nEpisode ${i+1}:\n${text}`);
         });
     });
 }
