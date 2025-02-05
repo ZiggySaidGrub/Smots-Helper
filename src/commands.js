@@ -212,6 +212,42 @@ const commands = [
                     {
                         name:"20",
                         value:20
+                    },
+                    {
+                        name:"30",
+                        value:30
+                    },
+                    {
+                        name:"50",
+                        value:50
+                    },
+                    {
+                        name:"75",
+                        value:75
+                    },
+                    {
+                        name:"100",
+                        value:100
+                    },
+                    {
+                        name:"150",
+                        value:150
+                    },
+                    {
+                        name:"200",
+                        value:200
+                    },
+                    {
+                        name:"250",
+                        value:250
+                    },
+                    {
+                        name:"300",
+                        value:300
+                    },
+                    {
+                        name:"322",
+                        value:322
                     }
                 ]
             },
@@ -375,6 +411,20 @@ const commands = [
         description:"Starts your multiplayer game of 9d Guessr. Only works if you are the host",
         integration_types:[0,1],
         contexts:[0,1,2],
+    },
+    {
+        name:"smearch",
+        description:"Gets smots videos based off a keyword",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+        options:[
+            {
+                name:"keyword",
+                description:"What to seacrch for",
+                type:ApplicationCommandOptionType.String,
+                required:true
+            }
+        ]
     }
 ];
 

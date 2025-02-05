@@ -90,10 +90,30 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName == "9dg-join"){ join(interaction); return;}
     if (interaction.commandName == "9dg-start"){ start(interaction); return;}
 
-    
+    if (interaction.commandName == "smearch"){ search(interaction); return;}
         
     
 });
+
+
+const pingScores = [25, 50, 75, 99, 125, 150, 175, 200];
+
+function search(interaction){
+    fs.readFile("./src/scores/explanations.json", async function (err, data) {
+        let explanations = JSON.parse(data);
+        let keyword = interaction.options.get("keyword").value;
+
+        let possible = [];
+        for (let i = 0; i < explanations.length; i++){
+            explanations[i].content = explanations[i].content.toLowerCase();
+            if (explanations[i].content.includes(keyword.toLowerCase())){
+                possible = possible.concat(explanations[i].episode);
+            }
+        }
+
+        interaction.reply(`The videos with the following keyword "${keyword}" are:\n${possible.toString()}`);
+    });
+}
 
 function start(interaction){
     fs.readFile("./src/scores/9dg.json", async function (err, data) {
@@ -310,6 +330,14 @@ function guessmult(interaction, code){
         let rna = games.mult[code].rooms[currentround].room;
         let points = 0;
 
+        for (let i = 0; i < fgcps.length; i++){
+            if (fgcps[i].cp == checkpoint && roomnum > fgcps[i].rooms*2){
+                interaction.reply(`the room ${checkpoint}-${roomnum} doesnt fuckin exist`);
+                return;
+            }
+        }
+
+
         let lowerlimit = ()=>{
             let total = 0;
             for (let i = 0; i < fgcps.length; i++){
@@ -350,7 +378,7 @@ function guessmult(interaction, code){
 
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
         
-        interaction.reply({content:"Guess submitted!", ephemeral:true});
+        interaction.reply({content:`Guess submitted!\nYou guessed: **${checkpoint}-${roomnum}**`, ephemeral:true});
     });
 }
 
@@ -365,12 +393,14 @@ setInterval(()=>{
             if (total == Object.keys(games.mult[game].players).length){
                 games.mult[game].round++;
                 let gameover = false;
+                let leaderboardtext = "";
                 for (let user in games.mult[game].players){
                     games.mult[game].players[user].done = false;
                     const guild = client.guilds.cache.get("1326330601908994112");
                     const founduser = (await guild.members.fetch()).get(user);
                     if (founduser!==undefined) {
                         if (games.mult[game].round-1 == games.mult[game].rounds){
+                            leaderboardtext = "";
                             let leaderboard = []
                             for (let player in games.mult[game].players){
                                 leaderboard = leaderboard.concat({
@@ -378,22 +408,29 @@ setInterval(()=>{
                                     "username":games.mult[game].players[player].username
                                 });
                             }
-                            let leaderboardtext = "";
+                            leaderboard.sort((a, b) => b.points - a.points);
                             for (let i = 0; i < leaderboard.length; i++){
-                                leaderboardtext = leaderboardtext.concat(`\n${i+1}. ${leaderboard[i].username}          ${leaderboard[i].points}`);
+                                let spaces = " ";
+                                let spacenunm = 15-leaderboard[i].username.length;
+                                for (let j = 0; j < spacenunm; j++){
+                                    spaces = spaces.concat(" ");
+                                }
+
+                                leaderboardtext = leaderboardtext.concat(`\n${i+1}. ${leaderboard[i].username}${spaces}${leaderboard[i].points}`);
                             }
                             console.log(leaderboard);
-                            leaderboard.sort((a, b) => b.points - a.points);
-                            founduser.send(`Game Over!\nYou scored ${games.mult[game].players[user].points}/${games.mult[game].rounds*5000}\`\`\`${leaderboardtext}\`\`\``);
+                            founduser.send(`The room was **${games.mult[game].rooms[games.mult[game].round-2].checkpoint}-${games.mult[game].rooms[games.mult[game].round-2].room}**\nGame Over!\nYou scored ${games.mult[game].players[user].points}/${games.mult[game].rounds*5000}\`\`\`${leaderboardtext}\`\`\``);
                             games.users[user] = undefined;
                             gameover = true;
+                            
                         } else {
-                            founduser.send({content:`Round has started <@${user}>!\nRound:${games.mult[game].round}/${games.mult[game].rounds}`,files:[games.mult[game].rooms[games.mult[game].round-1]["path"]]});
+                            founduser.send({content:`The room was **${games.mult[game].rooms[games.mult[game].round-2].checkpoint}-${games.mult[game].rooms[games.mult[game].round-2].room}**\nRound has started <@${user}>!\nRound:${games.mult[game].round}/${games.mult[game].rounds}`,files:[games.mult[game].rooms[games.mult[game].round-1]["path"]]});
                         }
                     }
                     
                 }
                 if(gameover){
+                    client.channels.cache.get("1334628901992927304").send(`\`\`\`${leaderboardtext}\`\`\``);
                     games.mult[game] = undefined;
                 }
                 fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
@@ -413,6 +450,13 @@ function guess(interaction){
         let cpa = games.single[interaction.user.id].rooms[currentround].checkpoint;
         let rna = games.single[interaction.user.id].rooms[currentround].room;
         let points = 0;
+
+        for (let i = 0; i < fgcps.length; i++){
+            if (fgcps[i].cp == checkpoint && roomnum > fgcps[i].rooms*2){
+                interaction.reply(`the room ${checkpoint}-${roomnum} doesnt fuckin exist`);
+                return;
+            }
+        }
 
         let lowerlimit = ()=>{
             let total = 0;
@@ -624,11 +668,17 @@ function submit(interaction){
             let newUser = true;
             if (scoreboard.length > 0){
                 for (let score = 0; score < scoreboard.length;score++) {
-                    if (scoreboard[score].id == interaction.user.id) { scoreboard[score].score++; newUser = false; break; }
+                    if (scoreboard[score].id == interaction.user.id) {
+                        scoreboard[score].score++; 
+                        newUser = false;
+                        if (pingScores.includes(scoreboard[score].score)){
+                            client.channels.cache.get("1334323257171775579").send(`:tada: <@${interaction.user.id}> has submitted their ${scoreboard[score].score}th explanation to Smots Helper! :tada:`);
+                        }
+                        break;
+                    }
                 }
             }
             if (newUser){ scoreboard = scoreboard.concat({"id":interaction.user.id,"name":username,"score":1});}
-            scoreboard.sort((a, b) => b.score - a.score);
             fs.writeFileSync("./src/scores/scoreboard.json",JSON.stringify(scoreboard, null, 2));
             
             explanations[i].content = content.value;
