@@ -258,6 +258,11 @@ const commands = [
                 required:true
             },
             {
+                name:"platinum",
+                description:"Do you want your game to be platinum mode? (If you guess a room wrong, the game ends)",
+                type:ApplicationCommandOptionType.Boolean
+            },
+            {
                 name:"code",
                 description:">:3",
                 type:ApplicationCommandOptionType.String
@@ -423,6 +428,189 @@ const commands = [
                 description:"What to seacrch for",
                 type:ApplicationCommandOptionType.String,
                 required:true
+            }
+        ]
+    },
+    {
+        name:"9dg-globalscore",
+        description:"View the total score of all 9dg games combined!",
+        integration_types:[0,1],
+        contexts:[0,1,2]
+    },
+    {
+        name:"9dg-leaderboard",
+        description:"View the leaderboard of 9dg games for each length!",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+        options:[
+            {
+                name:"rounds",
+                description:"Which length of game to view the leaderboard for?",
+                type:ApplicationCommandOptionType.Integer,
+                choices:[
+                    {
+                        name:"5",
+                        value:5
+                    },
+                    {
+                        name:"10",
+                        value:10
+                    },
+                    {
+                        name:"15",
+                        value:15
+                    },
+                    {
+                        name:"20",
+                        value:20
+                    },
+                    {
+                        name:"30",
+                        value:30
+                    },
+                    {
+                        name:"50",
+                        value:50
+                    },
+                    {
+                        name:"75",
+                        value:75
+                    },
+                    {
+                        name:"100",
+                        value:100
+                    },
+                    {
+                        name:"150",
+                        value:150
+                    },
+                    {
+                        name:"200",
+                        value:200
+                    },
+                    {
+                        name:"250",
+                        value:250
+                    },
+                    {
+                        name:"300",
+                        value:300
+                    },
+                    {
+                        name:"322",
+                        value:322
+                    }
+                ],
+                required:true
+
+            }
+        ]
+
+    },
+    {
+        name:"9dg-hof",
+        description:"A hall of fame for anyone who guess 322 room in a row correctly.",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+    },
+    {
+        name:"gay",
+        description:"adds a pride flag to an image",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+        options:[
+            {
+                name:"image",
+                description:"The image to edit",
+                required:true,
+                type:ApplicationCommandOptionType.Attachment
+            },
+            {
+                name:"flag",
+                description:"What flag to use",
+                required:true,
+                type:ApplicationCommandOptionType.Integer,
+                choices:[
+                    {
+                        name:"Rainbow",
+                        value:0
+                    },
+                    {
+                        name:"Progress",
+                        value:1
+                    },
+                    {
+                        name:"MLM",
+                        value:2
+                    },
+                    {
+                        name:"Lesbian",
+                        value:3
+                    },
+                    {
+                        name:"Bi",
+                        value:4
+                    },
+                    {
+                        name:"Pan",
+                        value:5
+                    },
+                    {
+                        name:"Omni",
+                        value:6
+                    },
+                    {
+                        name:"Asexual",
+                        value:7
+                    },
+                    {
+                        name:"Aromantic",
+                        value:8
+                    },
+                    {
+                        name:"Aroace",
+                        value:9
+                    },
+                    {
+                        name:"Demisexual",
+                        value:10
+                    },
+                    {
+                        name:"Demiromantic",
+                        value:11
+                    },
+                    {
+                        name:"Trans",
+                        value:12
+                    },
+                    {
+                        name:"Non-Binary",
+                        value:13
+                    },
+                    {
+                        name:"Meow",
+                        value:14
+                    },
+                    {
+                        name:"smots",
+                        value:15
+                    }
+                ]
+            },
+            {
+                name:"custom-flag",
+                description:"Upload your own custom flag.",
+                type:ApplicationCommandOptionType.Attachment
+            },
+            {
+                name:"dm",
+                description:"Send it dm's or not?",
+                type:ApplicationCommandOptionType.Boolean
+            },
+            {
+                name:"opacity",
+                description:"How opaque do you want it? (0 is invisible, 1 is not see thorugh)",
+                type:ApplicationCommandOptionType.Number
             }
         ]
     }

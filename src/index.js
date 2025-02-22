@@ -17,6 +17,8 @@ const CHANNEL_ID = "UCp7ZXAVupbsyh4V5_XXCubg";
 
 const nined = "./9d"
 
+const overlayImages = require('./overlay.js');
+
 
 const client = new Client({
     intents: [
@@ -25,6 +27,14 @@ const client = new Client({
         IntentsBitField.Flags.GuildMessages,
         IntentsBitField.Flags.MessageContent
     ]
+});
+
+client.on("messageCreate", (message) => {
+    if (message.content.toLowerCase().includes("meow") && !message.author.bot){
+        try {
+            message.reply("meow");
+        } catch (error) { console.log("Missing Permisions!");}
+    }
 });
 
 
@@ -89,12 +99,86 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName == "9dg-end-game"){ endgame(interaction); return;}
     if (interaction.commandName == "9dg-join"){ join(interaction); return;}
     if (interaction.commandName == "9dg-start"){ start(interaction); return;}
+    if (interaction.commandName == "9dg-globalscore"){ globalscore(interaction); return;}
+    if (interaction.commandName == "9dg-leaderboard"){ leaderboard(interaction); return;}
+    if (interaction.commandName == "9dg-hof"){
+        let text = "";
+        let games = JSON.parse(fs.readFileSync("./src/scores/9dg.json"));
+        for (i in games.hof){
+            text = text.concat(`\n${games.hof[i]}`)
+        }
+        if (text == "") text = "\nNo one yet 3:"
+        interaction.reply(`9D Guessr Hall of Fame\nEveryone here has managed to beat 322 rounds in platinum mode:**${text}**\n\nI want to give a big thank you for everyone who has played this game and helped make it better, this game would not be what it is today without you guys! <:smotsheart:1327432522518237254>`);
+        return;
+    }
 
     if (interaction.commandName == "smearch"){ search(interaction); return;}
+
+    if (interaction.commandName == "gay"){ gay(interaction); return;}
         
     
 });
+const flags = ["rainbow.png","progress.png","mlm.png","lesbian.png","bi.png","pan.png","omni.png","ace.png","aro.png","aroace.png","demiace.png","demiaro.png","trans.png","enby.png","cat.png","smots.png"]
 
+function gay(interaction){
+    let image = interaction.options.get("image");
+    let flag = interaction.options.get("flag").value;
+    let flagImage = interaction.options.get("custom-flag");
+    if (!flagImage) flagImage = {"attachment":{"contentType":"image/png"},"inUse":false};
+    let visible = false;
+    if (interaction.options.get("dm")) visible = interaction.options.get("dm").value;
+    let opacity = 0.60;
+    if (interaction.options.get("opacity")) opacity = interaction.options.get("opacity").value;
+    if (opacity > 1 || opacity < 0){interaction.reply({content:"Please use an opacity between 0 and 1!", ephemeral:true}); return;}
+    let fileTypes = ["image/png","image/jpeg","image/bmp","image/gif"];
+    if (!fileTypes.includes(image.attachment.contentType) || (!fileTypes.includes(flagImage.attachment.contentType) && flagImage.inUse != false)) {interaction.reply({content:"Please use a JPG, PNG, BMP or GIF file!",ephemeral:true}); return;}
+
+    var flagPath = () => {
+        if (flagImage.inUse != false){
+            return flagImage.attachment.url;
+        }
+        return `./flags/${flags[flag]}`;
+    }
+
+    interaction.reply({content:"generating image :3 :3 :3", ephemeral:true});
+    overlayImages(image.attachment.url,flagPath(),"./output/out.png",opacity).then(()=>{
+        //interaction.reply({ephemeral:visible,files:[`./output/out.png`]});
+        if (!visible) client.channels.cache.get(interaction.channelId).send({files:[`./output/out.png`]});
+        else interaction.user.send({files:[`./output/out.png`]});
+        
+    });
+}
+
+function globalscore(interaction){
+    fs.readFile("./src/scores/9dg.json", async function (err, data) {
+        let games = JSON.parse(data);
+        interaction.reply(`The current point sum of all 9d Guessr games ever played is ${games.globalscore}!`);
+    });
+}
+function leaderboard(interaction){
+    fs.readFile("./src/scores/9dg.json", async function (err, data) {
+        let games = JSON.parse(data);
+        let rounds = interaction.options.get("rounds").value;
+        let sbname = "scoreboard"+rounds.toString();
+        let leaderboardtext = "";
+
+        for (let i = 0; i < Math.min(games[sbname].length, 25); i++){
+            let spaces = " ";
+            let spacenunm = 15-games[sbname][i].name.length;
+            for (let j = 0; j < spacenunm; j++){
+                spaces = spaces.concat(" ");
+            }
+
+            leaderboardtext = leaderboardtext.concat(`\n${i+1}. ${games[sbname][i].name}${spaces}${games[sbname][i].points}`);
+        }
+        console.log(Math.min(games[sbname].length, 25));
+        if (games[sbname].length == 0){
+            interaction.reply({content:`There are no highscores for games of ${rounds} rounds.`, ephemeral:true});
+            return;
+        }
+        interaction.reply(`The top 25 scores for games of ${rounds} rounds are:\n\`\`\`${leaderboardtext}\`\`\``)
+    });
+}
 
 const pingScores = [25, 50, 75, 99, 125, 150, 175, 200];
 
@@ -197,7 +281,8 @@ function newgame(interaction){
         let smollist = [];
 
         let secret = interaction.options.get("code");
-        if (!secret) secret = ""; else secret = secret.value;
+        let scoreable = true;
+        if (!secret) secret = ""; else {secret = secret.value;scoreable = false}
         console.log(secret);
 
         for (let i = 0; i < rounds; i++){
@@ -221,8 +306,21 @@ function newgame(interaction){
                 });
                 break;
             }
+            if (secret == "test"){
+                for (let j = 0; j < rounds; j++){
+                    roomslist = roomslist.concat({
+                        "checkpoint":"ST",
+                        "room":"1",
+                        "path":`${nined}/ST/1/image.png`
+                    });
+                }
+                break;
+            }
 
-            if (pic == "cat.png" && getRandomInt(1,1000) != 1) pic = "image.png"
+            let trys = 0;
+            while (pic.slice(0,3) == "cat" && getRandomInt(1,100) != 1){
+                pic = pics[Math.floor(Math.random() * pics.length)];
+            }
 
             if (smollist.includes(`${checkpoint}${room}`) || (secret == process.env.SECRET && checkpoint == "SMOTS" && room == "8")){
                 i--;
@@ -235,10 +333,14 @@ function newgame(interaction){
                 smollist = smollist.concat(`${checkpoint}${room}`);
             }
         }
+        let platinum = false;
+        if (interaction.options.get("platinum")) platinum = interaction.options.get("platinum").value
 
         games.single[interaction.user.id] = {
             "rounds":rounds,
             "round":1,
+            "platinum":platinum,
+            "scoreable":scoreable,
             "rooms":roomslist,
             "points":0,
             "user":{
@@ -274,8 +376,10 @@ function newgamemult(interaction){
             let room = rooms[Math.floor(Math.random() * rooms.length)];
             let pics = fs.readdirSync(nined+"/"+checkpoint+"/"+room);
             let pic = pics[Math.floor(Math.random() * pics.length)];
-    
-            if (pic == "cat.png" && getRandomInt(1,1000) != 1) pic = "image.png"
+
+            while (pic.slice(0,3) == "cat" && getRandomInt(1,100) != 1){
+                pic = pics[Math.floor(Math.random() * pics.length)];
+            }
 
             if (smollist.includes(`${checkpoint}${room}`)){
                 i--;
@@ -451,6 +555,18 @@ function guess(interaction){
         let rna = games.single[interaction.user.id].rooms[currentround].room;
         let points = 0;
 
+        if (games.single[interaction.user.id].platinum){
+            if (checkpoint != cpa || roomnum != rna){
+                interaction.reply(`:boom: You guessed **${checkpoint}-${roomnum}** and the room was **${cpa}-${rna}** :boom:\n\nSay goodbye to your save! <:spinner:1334977448961642507>`);
+
+                games.single[interaction.user.id] = undefined;
+                games.users[interaction.user.id] = undefined;
+            
+                fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
+                return;
+            }
+        }
+
         for (let i = 0; i < fgcps.length; i++){
             if (fgcps[i].cp == checkpoint && roomnum > fgcps[i].rooms*2){
                 interaction.reply(`the room ${checkpoint}-${roomnum} doesnt fuckin exist`);
@@ -492,12 +608,56 @@ function guess(interaction){
         points = Math.ceil(5000 / (1 + (roomdist() * 0.05)));
         
         games.single[interaction.user.id].points += points;
-
+        if (games.single[interaction.user.id].scoreable) games.globalscore += points;
 
         if (games.single[interaction.user.id].round == games.single[interaction.user.id].rounds) {
-            interaction.reply(`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nGame Over!\nYou scored **${games.single[interaction.user.id].points}**/${games.single[interaction.user.id].rounds*5000}.`);
+            let sbname = "scoreboard"+games.single[interaction.user.id].rounds.toString();
+            let username = interaction.user.username;
+            
+            console.log(sbname);
+            let newpb = ""
+            let plat = ""
+            let newUser = true;
+            if (games[sbname].length > 0 && games.single[interaction.user.id].scoreable){
+                for (let i = 0; i < games[sbname].length; i++) {
+                    console.log(i);
+                    if (games[sbname][i].id == interaction.user.id) {
+                        if (games.single[interaction.user.id].points > games[sbname][i].points){
+                            games[sbname][i].points = games.single[interaction.user.id].points; 
+                            newpb = "\nThat's a new personal best!"
+                        }
+                        newUser = false;
+                        break;
+                    }
+                }
+            }
+            if (newUser && games.single[interaction.user.id].scoreable){ 
+                games[sbname] = games[sbname].concat({
+                    "id":interaction.user.id,
+                    "name":username,
+                    "points":games.single[interaction.user.id].points
+                });
+            }
+            console.log(games.single[interaction.user.id].platinum);
+            if (games.single[interaction.user.id].platinum){
+                plat = `Wow! You managed to beat **${games.single[interaction.user.id].rounds.toString()} rounds** on platinum mode! <:plat:1339680181811417168>`
+            } else if (games.single[interaction.user.id].points == games.single[interaction.user.id].rounds * 5000){
+                plat = `Wow! You managed to beat **${games.single[interaction.user.id].rounds.toString()} rounds** without ever guessing wrong! <:plat:1339680181811417168>`
+            }
+            if (games.single[interaction.user.id].points == games.single[interaction.user.id].rounds * 5000 && games.single[interaction.user.id].rounds == 322){
+                let user = interaction.user.globalName;
+                if (!user) user = interaction.user.username;
+                games.hof = games.hof.concat(user);
+            }
+
+            interaction.reply(`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nGame Over!\nYou scored **${games.single[interaction.user.id].points}**/${games.single[interaction.user.id].rounds*5000}.${newpb}\n${plat}`);
+            
+
+            games[sbname] = games[sbname].sort((a, b) => b.points-a.points);
+
             games.single[interaction.user.id] = undefined;
             games.users[interaction.user.id] = undefined;
+            
             fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
             return;
         }
@@ -627,7 +787,7 @@ function explain(interaction){
         let explanations = JSON.parse(data);
         getVideoCount(CHANNEL_ID).then((count) => {
             if (!lineNumber) lineNumber = {value:count};
-            if (lineNumber > count) {interaction.reply("That video doesn't exist!");return;}
+            if (lineNumber.value > count || lineNumber.value < 1) {interaction.reply("That video doesn't exist!");return;}
             let data = explanations[lineNumber.value-1];
             if (data.content == "") { 
                 if (lineNumber.value > count){ interaction.reply("That video doesn't exist!"); return; }
