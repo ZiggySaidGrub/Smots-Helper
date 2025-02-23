@@ -263,6 +263,11 @@ const commands = [
                 type:ApplicationCommandOptionType.Boolean
             },
             {
+                name:"time",
+                description:"How long do you want to see the image? (In milliseconds, leave blank for infinite)",
+                type:ApplicationCommandOptionType.Integer
+            },
+            {
                 name:"code",
                 description:">:3",
                 type:ApplicationCommandOptionType.String

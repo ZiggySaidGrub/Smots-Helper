@@ -10,6 +10,7 @@
   "description": "",
   "dependencies": {
     "axios": "^1.7.9",
+    "discord": "^0.8.2",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.7",
     "fs": "^0.0.1-security",

@@ -336,9 +336,13 @@ function newgame(interaction){
         let platinum = false;
         if (interaction.options.get("platinum")) platinum = interaction.options.get("platinum").value
 
+        let time = null;
+        if (interaction.options.get("time")) time = interaction.options.get("time").value;
+
         games.single[interaction.user.id] = {
             "rounds":rounds,
             "round":1,
+            "time":time,
             "platinum":platinum,
             "scoreable":scoreable,
             "rooms":roomslist,
@@ -352,7 +356,14 @@ function newgame(interaction){
         games.users[interaction.user.id] = {};
         
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
-        interaction.reply({content:`Game has started <@${interaction.user.id}>!\nRound:1/${rounds}`,files:[games.single[interaction.user.id]["rooms"][0]["path"]]});
+        let meow = async ()=>{
+            let message = await interaction.reply({content:`Game has started <@${interaction.user.id}>!\nRound:1/${rounds}`,files:[games.single[interaction.user.id]["rooms"][0]["path"]],fetchReply:true});
+            if (time){
+                await sleep(time);
+                message.removeAttachments();
+            }
+        }
+        meow();
     });
 }
 
@@ -545,7 +556,7 @@ setInterval(()=>{
 
 
 function guess(interaction){
-    fs.readFile("./src/scores/9dg.json", function (err, data) {
+    fs.readFile("./src/scores/9dg.json", async function (err, data) {
         let games = JSON.parse(data);
         if (games.users[interaction.user.id] == undefined){interaction.reply({content:"You don't have a game running!",ephemeral:true});return;}
         let checkpoint = interaction.options.get("checkpoint").value;
@@ -665,10 +676,18 @@ function guess(interaction){
         games.single[interaction.user.id].round++;
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
         
-        interaction.reply({content:`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nRound has started <@${interaction.user.id}>!\nRound:${currentround+2}/${games.single[interaction.user.id].rounds}`,files:[games.single[interaction.user.id]["rooms"][currentround+1]["path"]]});
+        let message = await interaction.reply({content:`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nRound has started <@${interaction.user.id}>!\nRound:${currentround+2}/${games.single[interaction.user.id].rounds}`,files:[games.single[interaction.user.id]["rooms"][currentround+1]["path"]],fetchReply:true});
+        if (games.single[interaction.user.id].time){
+            await sleep(games.single[interaction.user.id].time);
+            message.removeAttachments();
+        }
     });
 }
-
+function sleep(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+}
 
 function smonsole(interaction,members){
 
