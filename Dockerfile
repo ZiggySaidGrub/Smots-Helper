@@ -4,5 +4,6 @@ WORKDIR /app
 COPY . .
 
 RUN npm install
+RUN mkdir output
 
 CMD node .
