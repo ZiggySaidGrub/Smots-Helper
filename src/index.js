@@ -30,10 +30,9 @@ const client = new Client({
 });
 
 client.on("messageCreate", (message) => {
-    if (message.content.toLowerCase().includes("meow") && !message.author.bot){
-        try {
-            message.reply("meow");
-        } catch (error) { console.log("Missing Permisions!");}
+    if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.guildId == "1326330601908994112"){
+        console.log(message);
+        message.reply("meow");
     }
 });
 
