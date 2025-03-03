@@ -29,8 +29,14 @@ const client = new Client({
     ]
 });
 
+let meowNumber = 0;
+
 client.on("messageCreate", (message) => {
-    if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.guildId == "1326330601908994112"){
+    if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.channelId == "1346213601689604197"){
+        for (let i = 0; i < Math.floor((meowNumber^2)*0.1); i++){
+            client.channels.cache.get("1346213601689604197").send("meow");
+        }
+    } else if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.guildId == "1326330601908994112"){
         console.log(message);
         message.reply("meow");
     }
@@ -43,7 +49,7 @@ client.on("ready", (c) => {
         name:"smots gaming",
         type:ActivityType.Watching,
     });
-    
+    client.channels.cache.get("1346213601689604197").send("Meow number reset!");
 });
 
 
