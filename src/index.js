@@ -34,7 +34,7 @@ let meowNumber = 0;
 client.on("messageCreate", (message) => {
     if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.channelId == "1346213601689604197"){
         if (message.content == "!meowcount"){
-            message.reply(`The current meow count is ${meowNumber}`)
+            message.reply(`The current meow count is ${meowNumber} (${Math.floor((meowNumber^2)*0.1)} per meow)`)
         } else {
             meowNumber++;
             for (let i = 0; i < Math.floor((meowNumber^2)*0.1); i++){
