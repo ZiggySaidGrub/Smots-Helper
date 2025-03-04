@@ -33,9 +33,13 @@ let meowNumber = 0;
 
 client.on("messageCreate", (message) => {
     if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.channelId == "1346213601689604197"){
-        meowNumber++;
-        for (let i = 0; i < Math.floor((meowNumber^2)*0.1); i++){
-            client.channels.cache.get("1346213601689604197").send("meow");
+        if (message.content == "!meowcount"){
+            message.reply(`The current meow count is ${meowNumber}`)
+        } else {
+            meowNumber++;
+            for (let i = 0; i < Math.floor((meowNumber^2)*0.1); i++){
+                client.channels.cache.get("1346213601689604197").send("meow");
+            }
         }
     } else if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.guildId == "1326330601908994112"){
         console.log(message);
