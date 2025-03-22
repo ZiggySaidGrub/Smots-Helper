@@ -41,10 +41,11 @@ client.on("messageCreate", (message) => {
                 client.channels.cache.get("1346213601689604197").send("meow");
             }
         }
-    } else if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.guildId == "1326330601908994112"){
-        console.log(message);
-        message.reply("meow");
     }
+    // } else if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.guildId == "1326330601908994112"){
+    //     console.log(message);
+    //     message.reply("meow");
+    // }
 });
 
 
