@@ -31,7 +31,7 @@ const client = new Client({
 
 let meowNumber = 0;
 
-client.on("messageCreate", (message) => {
+/*client.on("messageCreate", (message) => {
     if (message.content.toLowerCase().includes("meow") && !message.author.bot && message.channelId == "1346213601689604197"){
         if (message.content == "!meowcount"){
             message.reply(`The current meow count is ${meowNumber} (${Math.floor((meowNumber^2)*0.1)} per meow)`)
@@ -46,7 +46,7 @@ client.on("messageCreate", (message) => {
     //     console.log(message);
     //     message.reply("meow");
     // }
-});
+});*/
 
 
 client.on("ready", (c) => {
@@ -55,13 +55,15 @@ client.on("ready", (c) => {
         name:"smots gaming",
         type:ActivityType.Watching,
     });
-    client.channels.cache.get("1346213601689604197").send("Meow number reset!");
+    //client.channels.cache.get("1346213601689604197").send("Meow number reset!");
 });
 
 
 client.on("interactionCreate", async (interaction) => { 
     
     if (!interaction.isChatInputCommand()) return;
+    //console.log(interaction.user.id)
+    if (interaction.user.id != "826957144162172998") return;
 
 
     const guild = client.guilds.cache.get(process.env.GUILD_ID);
@@ -380,13 +382,14 @@ function newgame(interaction){
             }
         };
         games.users[interaction.user.id] = {};
-        
+        interaction.reply({content:`Game has started <@${interaction.user.id}>!\nRound:1/${rounds}`,files:[games.single[interaction.user.id]["rooms"][0]["path"]]});
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
         let meow = async ()=>{
             let message = await interaction.reply({content:`Game has started <@${interaction.user.id}>!\nRound:1/${rounds}`,files:[games.single[interaction.user.id]["rooms"][0]["path"]],fetchReply:true});
             if (time){
                 await sleep(time);
                 message.removeAttachments();
+                // smots gamingmsasjas aisbnaiuyshgjbalskhugbvasljughbasilyhjkagvbsl,jkahygvbsuyhavfsuat,yfjvsgahj,ygscvajk,shv ajh,s b 
             }
         }
         meow();
@@ -603,7 +606,7 @@ function guess(interaction){
                 return;
             }
         }
-        let cheater = roomnum < 1
+        let cheater = false
         for (let i = 0; i < fgcps.length; i++){
             if (fgcps[i].cp == checkpoint && roomnum > fgcps[i].rooms*2){
                 interaction.reply(`the room ${checkpoint}-${roomnum} doesnt fuckin exist`);
@@ -636,11 +639,13 @@ function guess(interaction){
                 }
                 total += fgcps[i].rooms;
             }
-            if (lower){
+            /*if (lower){
                 return total-lowerlimit();
             } else {
                 return lowerlimit()-total;
-            }
+            }*/ // dumb bitch idiot
+
+            return Math.abs(total-lowerlimit());
         };
         points = Math.ceil(5000 / (1 + (roomdist() * 0.05)));
         if (cheater){
@@ -1040,4 +1045,4 @@ function isValidUrl(string) {
 }
 
 
-//client.login(process.env.TOKEN);
+client.login(process.env.TOKEN);
