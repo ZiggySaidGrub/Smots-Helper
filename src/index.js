@@ -1040,4 +1040,4 @@ function isValidUrl(string) {
 }
 
 
-client.login(process.env.TOKEN);
+//client.login(process.env.TOKEN);
