@@ -49,8 +49,6 @@ const readline = require('readline').createInterface({
 let channel = "1326330603486056480";
 let dmMode = false;
 let founduser = {id:"826957144162172998"};
-let replyMessage;
-let replyMode = false
 
 async function inputLoop() {
     readline.question('>>>', async (command) => {
@@ -84,36 +82,10 @@ async function inputLoop() {
             inputLoop();
             return;
         }
-        if (command.slice(0,3) == "$re"){
-            replyMode = true;
-            try {
-                let ch = await client.channels.cache.get(channel)
-                replyMessage = await ch.messages.fetch(command.slice(4))
-            } catch (error) {
-                console.log(`The message ${command.slice(4)} doesn't exist!`);
-                replyMode = false;
-                inputLoop();
-                return;
-            }
-            console.log(`Replying to message ${replyMessage.id}`);
-            inputLoop();
-            return;
-        }
-        if (command.slice(0,4) == "$sre"){
-            console.log("Stopping reply....")
-            replyMode = false
-        }
         
-        if (command[0] != "$"){
-            if (!dmMode){ 
-                if (!replyMode) client.channels.cache.get(channel).send(command);
-                else {
-                    replyMessage.reply(command);
-                    replyMode = false
-                }
-            }
-            else founduser.send(command);
-        }
+        if (!dmMode) client.channels.cache.get(channel).send(command);
+        else founduser.send(command);
+
         inputLoop();
         return;
     });

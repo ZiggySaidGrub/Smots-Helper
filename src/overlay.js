@@ -24,7 +24,7 @@ async function overlayImages(baseImagePath, overlayImageUrl, outputPath, opacity
         });
 
         // Save the result
-        await baseImage.write(outputPath); 
+        await baseImage.write(outputPath);
         console.log(`Image saved to ${outputPath}`);
     } catch (error) {
         console.error('Error:', error);

@@ -127,23 +127,8 @@ client.on("interactionCreate", async (interaction) => {
 
     if (interaction.commandName == "gay"){ gay(interaction); return;}
         
-    if (interaction.commandName == "submit-vid") { submitvid(interaction); return; }
+    
 });
-
-function submitvid(interaction){
-    let link = interaction.options.get("link");
-
-    if (!isValidUrl(link.value)){
-        interaction.reply({content:"thats not a url....",ephemeral:true});
-        return;
-    }
-
-    let channel = "1366615917676466248";
-
-    client.channels.cache.get(channel).send({content:`${interaction.user.displayName} submitted a video with the following link attached:\n${link.value}`});
-    interaction.reply({content:"video submitted :33", ephemeral:true})
-}
-
 const flags = ["rainbow.png","progress.png","mlm.png","lesbian.png","bi.png","pan.png","omni.png","ace.png","aro.png","aroace.png","demiace.png","demiaro.png","trans.png","enby.png","cat.png","smots.png"]
 
 function gay(interaction){
@@ -603,7 +588,7 @@ function guess(interaction){
                 return;
             }
         }
-        let cheater = roomnum < 1
+
         for (let i = 0; i < fgcps.length; i++){
             if (fgcps[i].cp == checkpoint && roomnum > fgcps[i].rooms*2){
                 interaction.reply(`the room ${checkpoint}-${roomnum} doesnt fuckin exist`);
@@ -643,9 +628,6 @@ function guess(interaction){
             }
         };
         points = Math.ceil(5000 / (1 + (roomdist() * 0.05)));
-        if (cheater){
-            points = 0;
-        }
         
         games.single[interaction.user.id].points += points;
         if (games.single[interaction.user.id].scoreable) games.globalscore += points;
@@ -689,11 +671,8 @@ function guess(interaction){
                 if (!user) user = interaction.user.username;
                 games.hof = games.hof.concat(user);
             }
-            let cheaterstring = ""
-            if (cheater){
-                cheaterstring = ", cheater"
-            }
-            interaction.reply(`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points${cheaterstring}!\nGame Over!\nYou scored **${games.single[interaction.user.id].points}**/${games.single[interaction.user.id].rounds*5000}.${newpb}\n${plat}`);
+
+            interaction.reply(`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nGame Over!\nYou scored **${games.single[interaction.user.id].points}**/${games.single[interaction.user.id].rounds*5000}.${newpb}\n${plat}`);
             
 
             games[sbname] = games[sbname].sort((a, b) => b.points-a.points);
@@ -708,11 +687,7 @@ function guess(interaction){
         games.single[interaction.user.id].round++;
         fs.writeFileSync("./src/scores/9dg.json",JSON.stringify(games, null, 2));
         
-        if (cheater){
-            let message = await interaction.reply({content:`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points, cheater!\nRound has started <@${interaction.user.id}>!\nRound:${currentround+2}/${games.single[interaction.user.id].rounds}`,files:[games.single[interaction.user.id]["rooms"][currentround+1]["path"]],fetchReply:true});
-        } else {
-            let message = await interaction.reply({content:`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nRound has started <@${interaction.user.id}>!\nRound:${currentround+2}/${games.single[interaction.user.id].rounds}`,files:[games.single[interaction.user.id]["rooms"][currentround+1]["path"]],fetchReply:true});
-        }
+        let message = await interaction.reply({content:`You guessed **${checkpoint}-${roomnum}**\nThe room was **${cpa}-${rna}**. You scored **${points}** points!\nRound has started <@${interaction.user.id}>!\nRound:${currentround+2}/${games.single[interaction.user.id].rounds}`,files:[games.single[interaction.user.id]["rooms"][currentround+1]["path"]],fetchReply:true});
         if (games.single[interaction.user.id].time){
             await sleep(games.single[interaction.user.id].time);
             message.removeAttachments();
@@ -1030,14 +1005,7 @@ function getRandomInt(min, max) {
 }
 
 
-function isValidUrl(string) {
-    try {
-      new URL(string);
-      return true;
-    } catch (error) {
-      return false;
-    }
-}
+
 
 
 client.login(process.env.TOKEN);
