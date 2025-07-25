@@ -589,13 +589,7 @@ function guess(interaction){
             }
         }
 
-        for (let i = 0; i < fgcps.length; i++){
-            if (fgcps[i].cp == checkpoint && roomnum > fgcps[i].rooms*2){
-                interaction.reply(`the room ${checkpoint}-${roomnum} doesnt fuckin exist`);
-                return;
-            }
-        }
-
+        
         let lowerlimit = ()=>{
             let total = 0;
             for (let i = 0; i < fgcps.length; i++){
@@ -621,17 +615,27 @@ function guess(interaction){
                 }
                 total += fgcps[i].rooms;
             }
-            if (lower){
+            /*if (lower){
                 return total-lowerlimit();
             } else {
                 return lowerlimit()-total;
-            }
+            }*/
+            return Math.abs(lowerlimit()-total);
         };
         points = Math.ceil(5000 / (1 + (roomdist() * 0.05)));
         
+        for (let i = 0; i < fgcps.length; i++){
+            if (fgcps[i].cp == checkpoint && roomnum > fgcps[i].rooms*2){
+                interaction.reply(`the room ${checkpoint}-${roomnum} doesnt fuckin exist`);
+                return;
+            } else if (fgcps[i].cp == checkpoint && (roomnum > fgcps[i].rooms || roomnum < 1)){
+                points = 0
+            }
+        }
+        
         games.single[interaction.user.id].points += points;
         if (games.single[interaction.user.id].scoreable) games.globalscore += points;
-
+        
         if (games.single[interaction.user.id].round == games.single[interaction.user.id].rounds) {
             let sbname = "scoreboard"+games.single[interaction.user.id].rounds.toString();
             let username = interaction.user.username;
