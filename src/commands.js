@@ -618,6 +618,20 @@ const commands = [
                 type:ApplicationCommandOptionType.Number
             }
         ]
+    },
+    {
+        name:"submit-vid",
+        description:"Submit a video to smots gaming!",
+        integration_types:[0,1],
+        contexts:[0,1,2],
+        options:[
+            {
+                name:"link",
+                description:"Link to add.",
+                type:ApplicationCommandOptionType.String,
+                required:true
+            }
+        ]
     }
 ];
 
@@ -627,17 +641,9 @@ const rest = new REST({ version:"10" }).setToken(process.env.TOKEN);
     try {
         console.log("Regestering slash commands...")
         await rest.put(
-            Routes.applicationCommands(
-                process.env.CLIENT_ID,process.env.GUILD_ID
-            ),
+            Routes.applicationCommands(process.env.CLIENT_ID),
             { body:commands }
         );
-        /*await rest.put(
-            Routes.applicationGuildCommands(
-                process.env.CLIENT_ID,process.env.GUILD_ID
-            ),
-            { body:commands }
-        );*/
         
         console.log("✅ Slash commands were registered. ✅")
     } catch (error) {
