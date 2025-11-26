@@ -131,7 +131,9 @@ client.on("interactionCreate", async (interaction) => {
 });
 const flags = ["rainbow.png","progress.png","mlm.png","lesbian.png","bi.png","pan.png","omni.png","ace.png","aro.png","aroace.png","demiace.png","demiaro.png","trans.png","enby.png","cat.png","smots.png"]
 
-function gay(interaction){
+async function gay(interaction){
+    await interaction.deferReply();
+
     let image = interaction.options.get("image");
     let flag = interaction.options.get("flag").value;
     let flagImage = interaction.options.get("custom-flag");
@@ -151,10 +153,10 @@ function gay(interaction){
         return `./flags/${flags[flag]}`;
     }
 
-    interaction.reply({content:"generating image :3 :3 :3", ephemeral:true});
+    //interaction.reply({content:"generating image :3 :3 :3", ephemeral:true});
     overlayImages(image.attachment.url,flagPath(),"./output/out.png",opacity).then(()=>{
         //interaction.reply({ephemeral:visible,files:[`./output/out.png`]});
-        if (!visible) client.channels.cache.get(interaction.channelId).send({files:[`./output/out.png`]});
+        if (!visible) interaction.editReply({files:[`./output/out.png`]});
         else interaction.user.send({files:[`./output/out.png`]});
         
     });
